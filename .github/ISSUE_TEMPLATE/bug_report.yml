@@ -1,0 +1,36 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Inbox
+        2. Share a note from Keep
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: Pixel 7, Android 15
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: 0.1.0 (from More → Preferences or the release tag)
+  - type: dropdown
+    id: language
+    attributes:
+      label: App language
+      options: [English, Arabic]
