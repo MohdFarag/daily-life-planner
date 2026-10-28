@@ -35,15 +35,23 @@ class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 1) {
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
-    fun all(table: Table): List<JSONObject> =
-        readableDatabase.rawQuery("SELECT doc FROM ${table.name}", null).use { c ->
-            buildList { while (c.moveToNext()) add(JSONObject(c.getString(0))) }
+    fun all(table: Table): List<JSONObject> {
+        val c = readableDatabase.rawQuery("SELECT doc FROM ${table.name}", null)
+        try {
+            return buildList { while (c.moveToNext()) add(JSONObject(c.getString(0))) }
+        } finally {
+            c.close()
         }
+    }
 
-    fun get(table: Table, id: String): JSONObject? =
-        readableDatabase.rawQuery("SELECT doc FROM ${table.name} WHERE id = ?", arrayOf(id)).use { c ->
-            if (c.moveToFirst()) JSONObject(c.getString(0)) else null
+    fun get(table: Table, id: String): JSONObject? {
+        val c = readableDatabase.rawQuery("SELECT doc FROM ${table.name} WHERE id = ?", arrayOf(id))
+        try {
+            return if (c.moveToFirst()) JSONObject(c.getString(0)) else null
+        } finally {
+            c.close()
         }
+    }
 
     fun put(table: Table, id: String, doc: JSONObject, extra: Map<String, String> = emptyMap()) {
         val v = ContentValues().apply {

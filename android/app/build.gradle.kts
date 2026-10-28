@@ -77,6 +77,6 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.kotlinx.coroutines.android)
 
-    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.org.json) // android.jar's org.json is a stub in local unit tests
 }

@@ -199,12 +199,12 @@ fun CaptureSheet(vm: AppViewModel) {
                         } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) startRecording()
                         else askMic.launch(Manifest.permission.RECORD_AUDIO)
                     },
-                    if (recording) BtnStyle.PRIMARY else BtnStyle.SECONDARY,
+                    style = if (recording) BtnStyle.PRIMARY else BtnStyle.SECONDARY,
                     icon = if (recording) Icons.Outlined.Stop else Icons.Outlined.Mic,
                 )
-                Mode.PHOTO -> Btn(tr("takePhoto"), { val (f, u) = newFile("jpg"); pendingFile = f; takePhoto.launch(u) }, BtnStyle.SECONDARY, icon = Icons.Outlined.CameraAlt)
-                Mode.VIDEO -> Btn(tr("recordVideo"), { val (f, u) = newFile("mp4"); pendingFile = f; takeVideo.launch(u) }, BtnStyle.SECONDARY, icon = Icons.Outlined.Videocam)
-                Mode.FILE -> Btn(tr("chooseFile"), { pickFiles.launch(arrayOf("*/*")) }, BtnStyle.SECONDARY, icon = Icons.Outlined.AttachFile)
+                Mode.PHOTO -> Btn(tr("takePhoto"), { val (f, u) = newFile("jpg"); pendingFile = f; takePhoto.launch(u) }, style = BtnStyle.SECONDARY, icon = Icons.Outlined.CameraAlt)
+                Mode.VIDEO -> Btn(tr("recordVideo"), { val (f, u) = newFile("mp4"); pendingFile = f; takeVideo.launch(u) }, style = BtnStyle.SECONDARY, icon = Icons.Outlined.Videocam)
+                Mode.FILE -> Btn(tr("chooseFile"), { pickFiles.launch(arrayOf("*/*")) }, style = BtnStyle.SECONDARY, icon = Icons.Outlined.AttachFile)
                 else -> Unit
             }
             if (recording) Text(tr("recording", num(clock(elapsed))), style = T.micro, color = C.primary)

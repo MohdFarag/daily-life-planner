@@ -110,9 +110,9 @@ fun FocusScreen(vm: AppViewModel, s: Snapshot) {
                 FocusState.RUNNING -> Btn(tr("pause"), { vm.pauseFocus() })
                 else -> Btn(tr("resume"), { vm.resumeFocus() })
             }
-            if (focus.state != FocusState.BREAK) Btn(tr("takeBreak"), { vm.breakFocus() }, BtnStyle.SECONDARY)
-            Btn(tr("endSession"), { vm.endFocus(); vm.back() }, BtnStyle.SECONDARY)
-            Btn(tr("complete"), { vm.toggleDone(task); vm.tab(Tab.TODAY) }, BtnStyle.SECONDARY)
+            if (focus.state != FocusState.BREAK) Btn(tr("takeBreak"), { vm.breakFocus() }, style = BtnStyle.SECONDARY)
+            Btn(tr("endSession"), { vm.endFocus(); vm.back() }, style = BtnStyle.SECONDARY)
+            Btn(tr("complete"), { vm.toggleDone(task); vm.tab(Tab.TODAY) }, style = BtnStyle.SECONDARY)
         }
         Text(tr("endingKeepsOpen"), style = T.micro)
     }

@@ -163,10 +163,10 @@ fun TaskDetailScreen(vm: AppViewModel, s: Snapshot, id: String, fresh: Boolean) 
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (fresh) {
                 Btn(tr("planSession"), { vm.scheduleTaskId = task.id })
-                Btn(tr("continueProcessing"), { vm.replace(Screen.Process()) }, BtnStyle.SECONDARY)
+                Btn(tr("continueProcessing"), { vm.replace(Screen.Process()) }, style = BtnStyle.SECONDARY)
             } else {
                 if (!done) Btn(if (s.focus?.taskId == task.id) tr("resume") else tr("startFocus"), { vm.startFocus(task); vm.go(Screen.Focus) })
-                Btn(if (sessions.isEmpty()) tr("planSession") else tr("addSession"), { vm.scheduleTaskId = task.id }, BtnStyle.SECONDARY)
+                Btn(if (sessions.isEmpty()) tr("planSession") else tr("addSession"), { vm.scheduleTaskId = task.id }, style = BtnStyle.SECONDARY)
             }
         }
     }

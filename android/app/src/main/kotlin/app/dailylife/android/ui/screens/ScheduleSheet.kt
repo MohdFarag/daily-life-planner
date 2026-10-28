@@ -187,8 +187,8 @@ fun ScheduleSheet(vm: AppViewModel, s: Snapshot, key: String) {
 
             if (check == null || check.ok) Btn(tr("apply"), ::apply, enabled = slot != null)
             else {
-                Btn(tr("cancel"), { vm.scheduleTaskId = null }, BtnStyle.SECONDARY)
-                Btn(tr("applyAnyway"), ::apply, BtnStyle.QUIET)
+                Btn(tr("cancel"), { vm.scheduleTaskId = null }, style = BtnStyle.SECONDARY)
+                Btn(tr("applyAnyway"), ::apply, style = BtnStyle.QUIET)
             }
             Text(tr("multiSession"), style = T.micro)
         }
@@ -196,7 +196,7 @@ fun ScheduleSheet(vm: AppViewModel, s: Snapshot, key: String) {
 }
 
 @Composable
-private fun TimeBox(label: String, value: String, modifier: Modifier, onClick: () -> Unit) {
+private fun TimeBox(label: String, value: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(modifier.heightIn(min = 64.dp).card(R16).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.Center) {
         Text(label, style = T.micro)
         Text(value, style = T.button.copy(color = C.text))

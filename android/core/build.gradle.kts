@@ -18,7 +18,7 @@ kotlin {
 dependencies {
     // Exposed in the public API (PrayerSettings uses CalculationMethod and Madhab).
     api(libs.adhan)
-    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlin.test)
 }
 
 tasks.test {

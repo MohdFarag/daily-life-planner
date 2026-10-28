@@ -17,8 +17,11 @@ object Media {
 
     fun displayName(resolver: ContentResolver, uri: Uri): String? =
         runCatching {
-            resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+            val c = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null) ?: return null
+            try {
                 if (c.moveToFirst()) c.getString(0) else null
+            } finally {
+                c.close()
             }
         }.getOrNull()
 

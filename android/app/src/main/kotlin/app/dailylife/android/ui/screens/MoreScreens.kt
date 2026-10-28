@@ -192,7 +192,7 @@ fun TrashScreen(vm: AppViewModel, s: Snapshot) {
             ItemCard(i, listOf(tr("restore") to { vm.restore(i); Unit }, tr("deleteForever") to { vm.deleteForever(listOf(i.id)); Unit }),
                 i.purgeAt?.let { tr("purgeOn", shortDate(it.atZone(s.prayer.zone).toLocalDate(), vm.lang)) })
         }
-        if (items.isNotEmpty()) Btn(tr("emptyTrash"), { vm.deleteForever(items.map { it.id }) }, BtnStyle.SECONDARY)
+        if (items.isNotEmpty()) Btn(tr("emptyTrash"), { vm.deleteForever(items.map { it.id }) }, style = BtnStyle.SECONDARY)
     }
 }
 
@@ -287,7 +287,7 @@ fun BlocksScreen(vm: AppViewModel, s: Snapshot) {
         val newName = tr("timeBlocks")
         Btn(tr("addBlock"), {
             vm.saveBlock(TimeBlock("block-" + UUID.randomUUID(), newName, LocalTime.of(14, 0), LocalTime.of(16, 0), DayOfWeek.entries.toSet(), BlockPolicy.GUIDING))
-        }, BtnStyle.SECONDARY)
+        }, style = BtnStyle.SECONDARY)
     }
 }
 

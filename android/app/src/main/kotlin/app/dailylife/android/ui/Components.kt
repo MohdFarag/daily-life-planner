@@ -67,7 +67,7 @@ fun IconBtn(icon: ImageVector, label: String, onClick: () -> Unit, tint: Color =
 enum class BtnStyle { PRIMARY, SECONDARY, LIGHT, QUIET }
 
 @Composable
-fun Btn(text: String, onClick: () -> Unit, style: BtnStyle = BtnStyle.PRIMARY, enabled: Boolean = true, modifier: Modifier = Modifier.fillMaxWidth(), icon: ImageVector? = null) {
+fun Btn(text: String, onClick: () -> Unit, modifier: Modifier = Modifier.fillMaxWidth(), style: BtnStyle = BtnStyle.PRIMARY, enabled: Boolean = true, icon: ImageVector? = null) {
     val (bg, fg, border) = when (style) {
         BtnStyle.PRIMARY -> Triple(C.primary, C.onPrimary, null)
         BtnStyle.SECONDARY -> Triple(C.surface, C.primary, BorderStroke(1.dp, C.border))
@@ -233,7 +233,7 @@ fun Segmented(options: List<Pair<String, String>>, selected: String, onSelect: (
 }
 
 @Composable
-fun Chip(text: String, selected: Boolean, onClick: () -> Unit, icon: ImageVector? = null, modifier: Modifier = Modifier) {
+fun Chip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
     Row(
         modifier.height(44.dp).clip(R12)
             .background(if (selected) C.primary else C.surface)

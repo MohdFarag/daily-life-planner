@@ -116,13 +116,13 @@ fun TodayScreen(vm: AppViewModel, s: Snapshot) {
                     val list = s.lists.firstOrNull { it.id == task.listId }?.name
                     Text(listOfNotNull(list, task.notes.takeIf { it.isNotBlank() }).joinToString(" · "), style = T.small, color = C.onPrimary)
                 }
-                Btn(if (focused) tr("resume") else tr("startSession"), { vm.startFocus(task); vm.go(Screen.Focus) }, BtnStyle.LIGHT)
+                Btn(if (focused) tr("resume") else tr("startSession"), { vm.startFocus(task); vm.go(Screen.Focus) }, style = BtnStyle.LIGHT)
             }
         } else {
             Column(Modifier.fillMaxWidth().clip(R24).background(C.tint).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(tr("nothingNext"), style = T.h3, color = C.primary)
                 Text(tr("nothingNextHint"), style = T.small)
-                Btn(tr("openPlan"), { vm.tab(Tab.PLAN) }, BtnStyle.SECONDARY)
+                Btn(tr("openPlan"), { vm.tab(Tab.PLAN) }, style = BtnStyle.SECONDARY)
             }
         }
 

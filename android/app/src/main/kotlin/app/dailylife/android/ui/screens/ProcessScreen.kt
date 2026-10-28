@@ -139,8 +139,8 @@ private fun Decisions(vm: AppViewModel, item: CaptureItem, panel: Panel, setPane
     Text(tr("whatBecome"), style = T.h3)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Btn(tr("createTask"), { vm.toTask(item) })
-        Btn(tr("doNow"), { vm.startDoNow(item) }, BtnStyle.SECONDARY)
-        Btn(tr("saveReference"), { vm.move(item, CaptureState.REFERENCE) }, BtnStyle.SECONDARY)
+        Btn(tr("doNow"), { vm.startDoNow(item) }, style = BtnStyle.SECONDARY)
+        Btn(tr("saveReference"), { vm.move(item, CaptureState.REFERENCE) }, style = BtnStyle.SECONDARY)
         Row(
             Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { setPanel(if (panel == Panel.NONE) Panel.MENU else Panel.NONE) },
             horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
@@ -159,7 +159,7 @@ private fun Decisions(vm: AppViewModel, item: CaptureItem, panel: Panel, setPane
             Panel.SOMEDAY -> {
                 var review by remember { mutableStateOf<LocalDate?>(null) }
                 Column(Modifier.fillMaxWidth().card().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Btn("${tr("reviewOn")}: ${review?.let { shortDate(it, vm.lang) } ?: tr("notSet")}", { pickDate(context, vm.today().plusWeeks(4), vm.today()) { review = it } }, BtnStyle.SECONDARY)
+                    Btn("${tr("reviewOn")}: ${review?.let { shortDate(it, vm.lang) } ?: tr("notSet")}", { pickDate(context, vm.today().plusWeeks(4), vm.today()) { review = it } }, style = BtnStyle.SECONDARY)
                     Btn(tr("someday"), { vm.move(item, CaptureState.SOMEDAY, reviewOn = review) })
                 }
             }
@@ -168,7 +168,7 @@ private fun Decisions(vm: AppViewModel, item: CaptureItem, panel: Panel, setPane
                 var follow by remember { mutableStateOf(vm.today().plusDays(3)) }
                 Column(Modifier.fillMaxWidth().card().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Field(who, tr("who")) { who = it }
-                    Btn("${tr("followUpOn")}: ${shortDate(follow, vm.lang)}", { pickDate(context, follow, vm.today()) { follow = it } }, BtnStyle.SECONDARY)
+                    Btn("${tr("followUpOn")}: ${shortDate(follow, vm.lang)}", { pickDate(context, follow, vm.today()) { follow = it } }, style = BtnStyle.SECONDARY)
                     Btn(tr("waitingFor"), { vm.move(item, CaptureState.WAITING, WaitingFor(who.trim(), null, vm.today(), follow)) }, enabled = who.isNotBlank())
                 }
             }
@@ -194,7 +194,7 @@ private fun DoingNow(vm: AppViewModel, item: CaptureItem) {
         Text(tr("doNowHint"), style = T.small)
     }
     Btn(tr("markDone"), { vm.confirmDoNow(item) })
-    Btn(tr("doNowToTask"), { vm.toTask(item) }, BtnStyle.SECONDARY)
+    Btn(tr("doNowToTask"), { vm.toTask(item) }, style = BtnStyle.SECONDARY)
 }
 
 /** Lists are processed entry by entry; unselected entries stay in the inbox (CAP04, AC03). */
@@ -220,7 +220,7 @@ private fun EntriesPanel(vm: AppViewModel, item: CaptureItem) {
         vm.resolveEntries(item, choice.filterValues { it == "task" }.keys.toList(), choice.filterValues { it == "ref" }.keys.toList())
         choice.clear()
     }, enabled = choice.isNotEmpty())
-    Btn(tr("moveToTrash"), { vm.move(item, CaptureState.TRASHED) }, BtnStyle.QUIET)
+    Btn(tr("moveToTrash"), { vm.move(item, CaptureState.TRASHED) }, style = BtnStyle.QUIET)
 }
 
 @Composable
