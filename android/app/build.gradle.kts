@@ -60,7 +60,7 @@ kotlin {
 }
 
 dependencies {
-    implementation("app.dailylife:core")
+    implementation(libs.dailylife.core)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

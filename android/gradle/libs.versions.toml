@@ -12,6 +12,8 @@ adhan = "0.0.5"
 json = "20240303"
 
 [libraries]
+# Included build (android/core), substituted by Gradle; no version needed.
+dailylife-core = { module = "app.dailylife:core" }
 adhan = { module = "com.batoulapps.adhan:adhan2", version.ref = "adhan" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-ui = { module = "androidx.compose.ui:ui" }

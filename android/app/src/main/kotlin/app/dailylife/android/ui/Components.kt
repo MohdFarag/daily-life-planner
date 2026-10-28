@@ -67,15 +67,17 @@ fun IconBtn(icon: ImageVector, label: String, onClick: () -> Unit, tint: Color =
 enum class BtnStyle { PRIMARY, SECONDARY, LIGHT, QUIET }
 
 @Composable
-fun Btn(text: String, onClick: () -> Unit, modifier: Modifier = Modifier.fillMaxWidth(), style: BtnStyle = BtnStyle.PRIMARY, enabled: Boolean = true, icon: ImageVector? = null) {
+fun Btn(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, style: BtnStyle = BtnStyle.PRIMARY, enabled: Boolean = true, icon: ImageVector? = null) {
     val (bg, fg, border) = when (style) {
         BtnStyle.PRIMARY -> Triple(C.primary, C.onPrimary, null)
         BtnStyle.SECONDARY -> Triple(C.surface, C.primary, BorderStroke(1.dp, C.border))
         BtnStyle.LIGHT -> Triple(C.surface, C.primary, null)
         BtnStyle.QUIET -> Triple(Color.Transparent, C.primary, null)
     }
+    // Full width by default; a caller's own size (applied first) still takes precedence.
     Row(
         modifier
+            .fillMaxWidth()
             .heightIn(min = 52.dp)
             .clip(R16)
             .background(if (enabled) bg else bg.copy(alpha = 0.45f))
