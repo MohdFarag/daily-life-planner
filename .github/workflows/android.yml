@@ -74,6 +74,9 @@ jobs:
       - name: Explain failure
         if: failure()
         run: ../.github/scripts/gradle-failure-annotations.sh "$RUNNER_TEMP/gradle.log"
+      - name: Lint warnings
+        if: always()
+        run: ../.github/scripts/lint-warning-summary.sh "$RUNNER_TEMP/gradle.log"
       - name: Test report
         if: always()
         uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
