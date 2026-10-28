@@ -1,6 +1,9 @@
 plugins {
-    kotlin("jvm")
+    kotlin("jvm") version "2.4.0"
 }
+
+group = "app.dailylife"
+version = "0.1.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
