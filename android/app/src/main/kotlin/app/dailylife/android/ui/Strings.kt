@@ -247,5 +247,5 @@ fun tr(key: String, vararg args: Any): String = translate(LocalLang.current, key
 fun num(s: Any): String {
     val lang = LocalLang.current
     val out = localizeDigits(s.toString(), lang)
-    return if (lang == "ar" && ':' in out) "⁦$out⁩" else out
+    return if (lang == "ar" && ':' in out) "\u2066$out\u2069" else out
 }
