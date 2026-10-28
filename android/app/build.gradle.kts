@@ -50,6 +50,8 @@ android {
         checkReleaseBuilds = true
         htmlReport = true
         xmlReport = true
+        textReport = true
+        textOutput = file("stdout") // issues in the build log, picked up as CI annotations
     }
 }
 
