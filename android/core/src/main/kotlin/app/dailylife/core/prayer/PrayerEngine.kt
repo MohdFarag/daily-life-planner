@@ -84,7 +84,7 @@ object AstronomicalAdhanSource : AdhanSource {
             DateComponents(date.year, date.monthValue, date.dayOfMonth),
             params,
         )
-        fun conv(i: kotlin.time.Instant) = Instant.ofEpochSecond(i.epochSeconds, i.nanosecondsOfSecond.toLong())
+        fun conv(i: kotlinx.datetime.Instant) = Instant.ofEpochSecond(i.epochSeconds, i.nanosecondsOfSecond.toLong())
         return mapOf(
             PrayerName.FAJR to conv(times.fajr),
             PrayerName.DHUHR to conv(times.dhuhr),
