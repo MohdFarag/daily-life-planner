@@ -4,7 +4,7 @@ pluginManagement {
             content {
                 includeGroupByRegex("androidx.*")
                 includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google\\.android.*")
+                includeGroupByRegex("com\\.google.*")
             }
         }
         gradlePluginPortal() // mirrors Maven Central; listed first because Central rate-limits shared CI IPs
@@ -18,7 +18,7 @@ dependencyResolutionManagement {
             content {
                 includeGroupByRegex("androidx.*")
                 includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google\\.android.*")
+                includeGroupByRegex("com\\.google.*")
             }
         }
         maven("https://plugins.gradle.org/m2/")
