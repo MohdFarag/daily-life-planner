@@ -1,4 +1,5 @@
 plugins {
+    `java-library`
     alias(libs.plugins.kotlin.jvm)
 }
 
@@ -15,7 +16,8 @@ kotlin {
 }
 
 dependencies {
-    implementation(libs.adhan)
+    // Exposed in the public API (PrayerSettings uses CalculationMethod and Madhab).
+    api(libs.adhan)
     testImplementation(kotlin("test"))
 }
 
