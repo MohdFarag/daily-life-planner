@@ -40,12 +40,14 @@ jobs:
           PUSH_BEFORE: ${{ github.event.before }}
         run: |
           base="${PR_BASE:-$PUSH_BEFORE}"
+          android_paths='^(android/|\.github/(workflows/android\.yml|scripts/|problem-matchers/))'
           if [[ "$EVENT" == "workflow_dispatch" || -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
             changed=true
-          elif git diff --name-only "$base" HEAD | grep -qE '^(android/|\.github/(workflows/android\.yml|scripts/|problem-matchers/))'; then
-            changed=true
           else
-            changed=false
+            # --no-renames lists both sides of a move, so moving a file out of android/ still counts.
+            # The diff is captured first: piping into `grep -q` can fail the pipeline under pipefail.
+            files="$(git diff --name-only --no-renames "$base" HEAD)"
+            if grep -qE "$android_paths" <<< "$files"; then changed=true; else changed=false; fi
           fi
           echo "android=$changed" >> "$GITHUB_OUTPUT"
           echo "Android-related changes: $changed"
@@ -53,7 +55,8 @@ jobs:
   core:
     name: Core tests
     needs: changes
-    if: needs.changes.outputs.android == 'true'
+    # Fail closed: if change detection itself failed, run the suites rather than skip them.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.android == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -84,7 +87,8 @@ jobs:
   app:
     name: App build, lint and tests
     needs: changes
-    if: needs.changes.outputs.android == 'true'
+    # Fail closed: if change detection itself failed, run the suites rather than skip them.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.android == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
