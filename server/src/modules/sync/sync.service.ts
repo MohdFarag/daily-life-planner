@@ -122,8 +122,14 @@ export class SyncService {
 
   private async apply(tx: Tx, userId: string, m: Mutation, next: number): Promise<Applied> {
     const record = await repo.findRecord(tx, userId, m.entity, m.id);
-    const result = (status: MutationResult["status"], version: number, extra: Partial<MutationResult> = {}): MutationResult =>
-      ({ mutationId: m.mutationId, entity: m.entity, id: m.id, status, version, ...extra });
+    const result = (status: MutationResult["status"], version: number, extra: Partial<MutationResult> = {}): MutationResult => ({
+      mutationId: m.mutationId,
+      entity: m.entity,
+      id: m.id,
+      status,
+      version,
+      ...extra,
+    });
 
     if (m.op === "delete") {
       if (record?.deleted) return { result: result("applied", record.version), usedVersion: false };
@@ -139,7 +145,11 @@ export class SyncService {
     if (record?.deleted) return { result: result("rejected", record.version, { reason: "deleted" }), usedVersion: false };
 
     if (!record) {
-      await repo.insertRecord(tx, userId, m.entity, m.id, { doc: fields, fieldVersions: initialFieldVersions(fields, next), version: next });
+      await repo.insertRecord(tx, userId, m.entity, m.id, {
+        doc: fields,
+        fieldVersions: initialFieldVersions(fields, next),
+        version: next,
+      });
       return { result: result("applied", next), usedVersion: true };
     }
 

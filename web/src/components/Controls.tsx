@@ -2,7 +2,17 @@ import { Check, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { ICON_STROKE } from "./icons";
 
-export function IconButton({ icon: Icon, label, onClick, flip }: { icon: LucideIcon; label: string; onClick?: () => void; flip?: boolean }) {
+export function IconButton({
+  icon: Icon,
+  label,
+  onClick,
+  flip,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onClick?: () => void;
+  flip?: boolean;
+}) {
   return (
     <button className="icon-btn" aria-label={label} title={label} onClick={onClick}>
       <Icon size={24} strokeWidth={ICON_STROKE} className={flip ? "flip-rtl" : undefined} />
@@ -11,8 +21,18 @@ export function IconButton({ icon: Icon, label, onClick, flip }: { icon: LucideI
 }
 
 export function Button({
-  children, variant = "primary", onClick, disabled, type = "button",
-}: { children: ReactNode; variant?: "primary" | "secondary" | "quiet" | "light"; onClick?: () => void; disabled?: boolean; type?: "button" | "submit" }) {
+  children,
+  variant = "primary",
+  onClick,
+  disabled,
+  type = "button",
+}: {
+  children: ReactNode;
+  variant?: "primary" | "secondary" | "quiet" | "light";
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit";
+}) {
   return (
     <button type={type} className={`btn btn-${variant}`} onClick={onClick} disabled={disabled}>
       {children}
@@ -28,7 +48,17 @@ export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boo
   return <button className={`toggle${on ? " on" : ""}`} role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} />;
 }
 
-export function MenuItem({ icon: Icon, label, onClick, danger }: { icon: LucideIcon; label: string; onClick: () => void; danger?: boolean }) {
+export function MenuItem({
+  icon: Icon,
+  label,
+  onClick,
+  danger,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
   return (
     <button role="menuitem" className={`menu-item${danger ? " danger" : ""}`} onClick={onClick}>
       <Icon size={20} strokeWidth={ICON_STROKE} />

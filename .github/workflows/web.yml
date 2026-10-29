@@ -3,9 +3,9 @@ name: Web prototype
 on:
   push:
     branches: [main, "feature/**"]
-    paths: ["web/**", ".github/workflows/web.yml"]
+    paths: ["web/**", ".prettierrc.json", ".github/workflows/web.yml"]
   pull_request:
-    paths: ["web/**", ".github/workflows/web.yml"]
+    paths: ["web/**", ".prettierrc.json", ".github/workflows/web.yml"]
   workflow_dispatch:
 
 permissions:
@@ -31,5 +31,6 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
+      - run: npm run format:check
       - run: npm test
       - run: npm run build

@@ -32,9 +32,7 @@ export function freeMinutes(busy: Busy[]): number {
   const from = Math.max(nowMin(), toMin("09:00"));
   const to = toMin(WORKDAY_END);
   if (from >= to) return 0;
-  const committed = busy
-    .map((b) => Math.max(0, Math.min(b.end, to) - Math.max(b.start, from)))
-    .reduce((a, b) => a + b, 0);
+  const committed = busy.map((b) => Math.max(0, Math.min(b.end, to) - Math.max(b.start, from))).reduce((a, b) => a + b, 0);
   return Math.max(0, to - from - committed);
 }
 

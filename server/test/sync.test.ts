@@ -16,10 +16,21 @@ async function push(headers: Headers, mutations: object[]) {
 async function pull(headers: Headers, since = 0, limit = 500) {
   const res = await ctx.app.inject({ method: "GET", url: `/v1/sync/pull?since=${since}&limit=${limit}`, headers });
   expect(res.statusCode).toBe(200);
-  return res.json<{ changes: { entity: string; id: string; version: number; deleted: boolean; doc: Record<string, unknown> }[]; cursor: number; hasMore: boolean }>();
+  return res.json<{
+    changes: { entity: string; id: string; version: number; deleted: boolean; doc: Record<string, unknown> }[];
+    cursor: number;
+    hasMore: boolean;
+  }>();
 }
 
-const task = (id: string, fields: object, baseVersion = 0) => ({ mutationId: mid(), entity: "tasks", id, op: "upsert", baseVersion, fields });
+const task = (id: string, fields: object, baseVersion = 0) => ({
+  mutationId: mid(),
+  entity: "tasks",
+  id,
+  op: "upsert",
+  baseVersion,
+  fields,
+});
 
 describe("sync", () => {
   it("creates records and returns them on pull with a cursor", async () => {
@@ -28,7 +39,9 @@ describe("sync", () => {
     expect(pushed.results[0]).toMatchObject({ status: "applied", version: 1 });
 
     const first = await pull(headers);
-    expect(first.changes).toEqual([{ entity: "tasks", id: "t1", version: 1, deleted: false, doc: { title: "Review brief", listId: "work", status: "NEEDS_ACTION" } }]);
+    expect(first.changes).toEqual([
+      { entity: "tasks", id: "t1", version: 1, deleted: false, doc: { title: "Review brief", listId: "work", status: "NEEDS_ACTION" } },
+    ]);
     expect(first.cursor).toBe(1);
     expect((await pull(headers, first.cursor)).changes).toEqual([]);
   });
@@ -45,7 +58,7 @@ describe("sync", () => {
   it("merges edits to different fields from two devices", async () => {
     const { headers } = await signUp(ctx);
     await push(headers, [task("t1", { title: "Read", notes: "ch. 1" })]); // v1
-    await push(headers, [task("t1", { title: "Read 10 pages" }, 1)]);      // phone, v2
+    await push(headers, [task("t1", { title: "Read 10 pages" }, 1)]); // phone, v2
     const laptop = await push(headers, [task("t1", { notes: "ch. 2" }, 1)]); // laptop saw v1 only
     expect(laptop.results[0]!.status).toBe("applied");
     expect((await pull(headers)).changes[0]!.doc).toMatchObject({ title: "Read 10 pages", notes: "ch. 2" });
@@ -84,18 +97,37 @@ describe("sync", () => {
     const r = await push(headers, [
       item({ title: "x", state: "TRASHED", purgeAt: "soon" }),
       item({ title: "x", capturedAt: "2026-13-45T99:00:00Z" }),
-      { mutationId: mid(), entity: "sessions", id: "s1", op: "upsert", baseVersion: 0, fields: { taskId: "t1", start: "10:00", end: "10:45" } },
+      {
+        mutationId: mid(),
+        entity: "sessions",
+        id: "s1",
+        op: "upsert",
+        baseVersion: 0,
+        fields: { taskId: "t1", start: "10:00", end: "10:45" },
+      },
     ]);
     expect(r.results.map((x) => x.status)).toEqual(["rejected", "rejected", "rejected"]);
-    const ok = await push(headers, [item({ title: "x", state: "TRASHED", purgeAt: "2026-11-28T09:41:00.123456Z", capturedAt: "2026-10-29T09:41:00+03:00" })]);
+    const ok = await push(headers, [
+      item({ title: "x", state: "TRASHED", purgeAt: "2026-11-28T09:41:00.123456Z", capturedAt: "2026-10-29T09:41:00+03:00" }),
+    ]);
     expect(ok.results[0]!.status).toBe("applied");
   });
 
   it("rejects unknown entities and malformed batches at the API boundary", async () => {
     const { headers } = await signUp(ctx);
-    const unknown = await ctx.app.inject({ method: "POST", url: "/v1/sync/push", headers, payload: { mutations: [{ ...task("x", { a: 1 }), entity: "secrets" }] } });
+    const unknown = await ctx.app.inject({
+      method: "POST",
+      url: "/v1/sync/push",
+      headers,
+      payload: { mutations: [{ ...task("x", { a: 1 }), entity: "secrets" }] },
+    });
     expect(unknown.statusCode).toBe(400);
-    const noFields = await ctx.app.inject({ method: "POST", url: "/v1/sync/push", headers, payload: { mutations: [{ mutationId: mid(), entity: "tasks", id: "t", op: "upsert", baseVersion: 0 }] } });
+    const noFields = await ctx.app.inject({
+      method: "POST",
+      url: "/v1/sync/push",
+      headers,
+      payload: { mutations: [{ mutationId: mid(), entity: "tasks", id: "t", op: "upsert", baseVersion: 0 }] },
+    });
     expect(noFields.statusCode).toBe(400);
   });
 
@@ -110,7 +142,10 @@ describe("sync", () => {
 
   it("pages through changes with hasMore", async () => {
     const { headers } = await signUp(ctx);
-    await push(headers, Array.from({ length: 5 }, (_, i) => task(`t${i}`, { title: `Task ${i}` })));
+    await push(
+      headers,
+      Array.from({ length: 5 }, (_, i) => task(`t${i}`, { title: `Task ${i}` })),
+    );
     const page1 = await pull(headers, 0, 2);
     const page2 = await pull(headers, page1.cursor, 2);
     const page3 = await pull(headers, page2.cursor, 2);

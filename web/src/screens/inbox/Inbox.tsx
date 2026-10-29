@@ -60,11 +60,7 @@ export function Inbox() {
         <div className="sync-state">
           {pending || !s.online ? <CloudOff size={20} strokeWidth={ICON_STROKE} /> : <CloudCheck size={20} strokeWidth={ICON_STROKE} />}
           <div className="t-micro">
-            <p>
-              {pending
-                ? s.t(pending === 1 ? "waitingToSync" : "waitingToSyncMany", { n: pending })
-                : s.t("allSynced")}
-            </p>
+            <p>{pending ? s.t(pending === 1 ? "waitingToSync" : "waitingToSyncMany", { n: pending }) : s.t("allSynced")}</p>
             <p>{s.t("savedOnDevice")}</p>
           </div>
         </div>

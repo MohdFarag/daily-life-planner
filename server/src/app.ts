@@ -19,7 +19,7 @@ import { syncRoutes } from "./modules/sync/sync.routes.js";
 import { SyncService } from "./modules/sync/sync.service.js";
 import type { Config } from "./shared/config.js";
 import type { Db } from "./shared/db.js";
-import { ApiError } from "./shared/errors.js";
+import { tooManyRequests } from "./shared/errors.js";
 
 export interface AppDeps {
   config: Config;
@@ -59,8 +59,7 @@ export async function buildApp(deps: AppDeps) {
   await app.register(rateLimit, {
     max: config.API_RATE_LIMIT_PER_MINUTE,
     timeWindow: "1 minute",
-    errorResponseBuilder: (_request, context) =>
-      new ApiError(429, "rate_limited", `Too many requests; retry in ${Math.ceil(context.ttl / 1000)} seconds`),
+    errorResponseBuilder: (_request, context) => tooManyRequests(`Too many requests; retry in ${Math.ceil(context.ttl / 1000)} seconds`),
   });
   await app.register(swagger, {
     openapi: {
@@ -72,12 +71,15 @@ export async function buildApp(deps: AppDeps) {
   await app.register(swaggerUi, { routePrefix: "/docs" });
 
   await app.register(healthRoutes(db));
-  await app.register(async (v1) => {
-    await v1.register(authRoutes(services.auth, config.AUTH_RATE_LIMIT_PER_MINUTE));
-    await v1.register(syncRoutes(services.sync));
-    await v1.register(mediaRoutes(services.media));
-    await v1.register(accountRoutes(services.account));
-  }, { prefix: "/v1" });
+  await app.register(
+    async (v1) => {
+      await v1.register(authRoutes(services.auth, config.AUTH_RATE_LIMIT_PER_MINUTE));
+      await v1.register(syncRoutes(services.sync));
+      await v1.register(mediaRoutes(services.media));
+      await v1.register(accountRoutes(services.account));
+    },
+    { prefix: "/v1" },
+  );
 
   return { app, services };
 }

@@ -16,7 +16,9 @@ export function UnplannedTasks() {
         <div key={x.id} className="task-row" style={{ minHeight: 64 }}>
           <button className="task-info" onClick={() => s.go({ name: "task", id: x.id })}>
             <span className="t-body truncate">{s.taskTitle(x)}</span>
-            <span className="t-micro c-secondary">{s.n(x.estimate)} {s.t("min")} · {s.listName(x.list)}</span>
+            <span className="t-micro c-secondary">
+              {s.n(x.estimate)} {s.t("min")} · {s.listName(x.list)}
+            </span>
           </button>
           <button
             className="link-btn"

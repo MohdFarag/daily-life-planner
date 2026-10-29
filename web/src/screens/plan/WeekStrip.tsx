@@ -40,7 +40,11 @@ export function ViewSwitch({ view, onChange }: { view: View; onChange: (view: Vi
           </button>
         ))}
       </div>
-      <button className={`agenda-btn${view === "agenda" ? " active" : ""}`} aria-pressed={view === "agenda"} onClick={() => onChange("agenda")}>
+      <button
+        className={`agenda-btn${view === "agenda" ? " active" : ""}`}
+        aria-pressed={view === "agenda"}
+        onClick={() => onChange("agenda")}
+      >
         {s.t("agenda")}
       </button>
     </div>

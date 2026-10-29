@@ -83,23 +83,40 @@ function useStoreValue() {
   };
 
   const busyOn = (date: string, opts: { includeDone?: boolean } = {}): Busy[] =>
-    busyOnDate(data, date, {
-      task: fmt.taskTitle,
-      prayer: (key) => fmt.t("prayer", { name: fmt.prayerName(key) }),
-      event: fmt.eventTitle,
-    }, opts);
+    busyOnDate(
+      data,
+      date,
+      {
+        task: fmt.taskTitle,
+        prayer: (key) => fmt.t("prayer", { name: fmt.prayerName(key) }),
+        event: fmt.eventTitle,
+      },
+      opts,
+    );
 
   const today = todayISO();
   const todaysTasks = data.tasks.filter((x) => x.session?.date === today || x.doneOn === today);
 
   return {
-    data, update, lang: data.lang, ...fmt,
+    data,
+    update,
+    lang: data.lang,
+    ...fmt,
     ...nav,
-    captureOpen, setCaptureOpen, scheduleTaskId, setScheduleTaskId,
-    ...toasts, online,
-    ...actions, deleteItem, remaining: m.remaining,
-    triage, undoTriage, canUndo: () => lastTriage.current !== null,
-    busyOn, todaysTasks,
+    captureOpen,
+    setCaptureOpen,
+    scheduleTaskId,
+    setScheduleTaskId,
+    ...toasts,
+    online,
+    ...actions,
+    deleteItem,
+    remaining: m.remaining,
+    triage,
+    undoTriage,
+    canUndo: () => lastTriage.current !== null,
+    busyOn,
+    todaysTasks,
     freeMinutesToday: () => freeMinutes(busyOn(today)),
     exportData: () => downloadJson(`daily-life-planner-${today}.json`, { exportedAt: new Date().toISOString(), ...data }),
     reset: () => {

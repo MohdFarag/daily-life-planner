@@ -50,12 +50,12 @@ repository (plus `users`) and reaches other modules through their services; jobs
 
 ## API (v1)
 
-| Area | Endpoints |
-| --- | --- |
-| Auth | `POST /auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`; `GET /me`; `GET /sessions`; `DELETE /sessions/{id}` |
-| Sync | `POST /sync/push`, `GET /sync/pull?since=&limit=` |
-| Media | `POST /media`, `GET /media`, `GET /media/{id}`, `PUT /media/{id}/content`, `GET /media/{id}/content`, `DELETE /media/{id}` |
-| Account | `GET /account/export`, `DELETE /account` |
+| Area    | Endpoints                                                                                                                  |
+| ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Auth    | `POST /auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`; `GET /me`; `GET /sessions`; `DELETE /sessions/{id}` |
+| Sync    | `POST /sync/push`, `GET /sync/pull?since=&limit=`                                                                          |
+| Media   | `POST /media`, `GET /media`, `GET /media/{id}`, `PUT /media/{id}/content`, `GET /media/{id}/content`, `DELETE /media/{id}` |
+| Account | `GET /account/export`, `DELETE /account`                                                                                   |
 
 ### Authentication
 

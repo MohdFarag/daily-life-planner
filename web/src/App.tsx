@@ -33,20 +33,34 @@ export function App() {
   const isTab = (TABS as string[]).includes(route.name);
   const screen = (() => {
     switch (route.name) {
-      case "today": return <Today />;
-      case "inbox": return <Inbox />;
-      case "plan": return <Plan />;
-      case "more": return <More />;
-      case "process": return <Process key={route.itemId ?? "first"} itemId={route.itemId} />;
-      case "task": return <TaskDetail key={route.id} id={route.id} fresh={route.fresh} />;
-      case "focus": return <Focus />;
-      case "search": return <SearchScreen />;
-      case "tasks": return <TasksScreen />;
-      case "collections": return <CollectionsScreen />;
-      case "prayers": return <PrayersScreen />;
-      case "google": return <GoogleScreen />;
-      case "prefs": return <PrefsScreen />;
-      case "trash": return <TrashScreen />;
+      case "today":
+        return <Today />;
+      case "inbox":
+        return <Inbox />;
+      case "plan":
+        return <Plan />;
+      case "more":
+        return <More />;
+      case "process":
+        return <Process key={route.itemId ?? "first"} itemId={route.itemId} />;
+      case "task":
+        return <TaskDetail key={route.id} id={route.id} fresh={route.fresh} />;
+      case "focus":
+        return <Focus />;
+      case "search":
+        return <SearchScreen />;
+      case "tasks":
+        return <TasksScreen />;
+      case "collections":
+        return <CollectionsScreen />;
+      case "prayers":
+        return <PrayersScreen />;
+      case "google":
+        return <GoogleScreen />;
+      case "prefs":
+        return <PrefsScreen />;
+      case "trash":
+        return <TrashScreen />;
     }
   })();
 

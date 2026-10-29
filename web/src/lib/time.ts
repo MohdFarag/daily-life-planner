@@ -50,5 +50,4 @@ export const formatClock = (sec: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 };
 
-export const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
-  aStart < bEnd && bStart < aEnd;
+export const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) => aStart < bEnd && bStart < aEnd;

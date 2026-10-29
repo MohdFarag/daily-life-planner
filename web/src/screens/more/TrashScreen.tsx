@@ -19,7 +19,11 @@ export function TrashScreen() {
           ]}
         />
       ))}
-      {items.length > 0 && <Button variant="secondary" onClick={() => items.forEach((i) => s.deleteItem(i.id))}>{s.t("emptyTrash")}</Button>}
+      {items.length > 0 && (
+        <Button variant="secondary" onClick={() => items.forEach((i) => s.deleteItem(i.id))}>
+          {s.t("emptyTrash")}
+        </Button>
+      )}
     </SubScreen>
   );
 }

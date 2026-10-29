@@ -8,8 +8,7 @@ export type StringKey = Exclude<keyof Dict, "prayerNames">;
 
 const AR_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 
-export const localizeDigits = (s: string, lang: Lang) =>
-  lang === "ar" ? s.replace(/\d/g, (d) => AR_DIGITS[Number(d)]) : s;
+export const localizeDigits = (s: string, lang: Lang) => (lang === "ar" ? s.replace(/\d/g, (d) => AR_DIGITS[Number(d)]) : s);
 
 export function translate(lang: Lang, key: StringKey, vars?: Record<string, string | number>) {
   let s = dictionaries[lang][key] as string;

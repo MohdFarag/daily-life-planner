@@ -4,8 +4,7 @@ import { type InboxItem, type ItemKind, useStore } from "../state";
 
 export function useKindLabel() {
   const { t } = useStore();
-  return (kind: ItemKind) =>
-    ({ text: t("quickNote"), link: t("link"), voice: t("voiceNote"), photo: t("photo"), file: t("file") })[kind];
+  return (kind: ItemKind) => ({ text: t("quickNote"), link: t("link"), voice: t("voiceNote"), photo: t("photo"), file: t("file") })[kind];
 }
 
 export function useRelativeTime() {

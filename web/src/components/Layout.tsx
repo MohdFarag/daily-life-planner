@@ -9,7 +9,9 @@ export function PageHeading({ title, subtitle, search = true }: { title: string;
   return (
     <div className="page-heading">
       <div className="title-row">
-        <h1 className="t-h1" style={{ margin: 0 }}>{title}</h1>
+        <h1 className="t-h1" style={{ margin: 0 }}>
+          {title}
+        </h1>
         {search && <IconButton icon={Search} label={t("search")} onClick={() => go({ name: "search" })} />}
       </div>
       <p className="t-small c-secondary">{subtitle}</p>
@@ -56,7 +58,9 @@ export function Empty({ icon: Icon, title, hint }: { icon: LucideIcon; title: st
   return (
     <div className="empty">
       <Icon size={32} strokeWidth={1.5} />
-      <p className="t-label" style={{ color: "var(--color-text)" }}>{title}</p>
+      <p className="t-label" style={{ color: "var(--color-text)" }}>
+        {title}
+      </p>
       {hint && <p className="t-small">{hint}</p>}
     </div>
   );

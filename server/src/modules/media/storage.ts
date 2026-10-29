@@ -14,7 +14,9 @@ export interface MediaStorage {
 }
 
 export class OffsetMismatch extends Error {
-  constructor(readonly actual: number) { super(`Stored size is ${actual}`); }
+  constructor(readonly actual: number) {
+    super(`Stored size is ${actual}`);
+  }
 }
 
 export class LocalDiskStorage implements MediaStorage {
@@ -55,6 +57,9 @@ export class LocalDiskStorage implements MediaStorage {
   }
 
   async exists(key: string): Promise<boolean> {
-    return stat(this.file(key)).then(() => true, () => false);
+    return stat(this.file(key)).then(
+      () => true,
+      () => false,
+    );
   }
 }

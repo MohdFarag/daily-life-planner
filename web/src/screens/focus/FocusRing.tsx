@@ -10,8 +10,7 @@ export function FocusRing({ focus, remaining }: { focus: Focus; remaining: numbe
   const s = useStore();
   const running = !!focus.runningSince;
   const progress = 1 - remaining / focus.totalSec;
-  const status =
-    remaining <= 0 ? s.t("timeUp") : running ? s.t("remainingOf", { n: Math.round(focus.totalSec / 60) }) : s.t("pausedNote");
+  const status = remaining <= 0 ? s.t("timeUp") : running ? s.t("remainingOf", { n: Math.round(focus.totalSec / 60) }) : s.t("pausedNote");
   return (
     <div className="timer">
       <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden>

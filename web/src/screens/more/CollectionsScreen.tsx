@@ -19,9 +19,15 @@ export function CollectionsScreen() {
         if (!items.length) return null;
         return (
           <section key={status} className="stack-8">
-            <span className="t-micro c-secondary">{label} · {s.n(items.length)}</span>
+            <span className="t-micro c-secondary">
+              {label} · {s.n(items.length)}
+            </span>
             {items.map((i) => (
-              <ItemCard key={i.id} item={i} actions={[{ label: s.t("returnToInbox"), onClick: () => s.patchItem(i.id, { status: "inbox" }) }]} />
+              <ItemCard
+                key={i.id}
+                item={i}
+                actions={[{ label: s.t("returnToInbox"), onClick: () => s.patchItem(i.id, { status: "inbox" }) }]}
+              />
             ))}
           </section>
         );

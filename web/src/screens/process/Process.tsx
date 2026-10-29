@@ -7,7 +7,11 @@ import { Decisions } from "./Decisions";
 
 /** Where a filed item went, for the confirmation toast. */
 const DESTINATION: Partial<Record<TriageAction, StringKey>> = {
-  reference: "references", someday: "someday", waiting: "waiting", trash: "trashTitle", split: "tasks",
+  reference: "references",
+  someday: "someday",
+  waiting: "waiting",
+  trash: "trashTitle",
+  split: "tasks",
 };
 
 /** Walks the inbox one item at a time, asking what each should become. */

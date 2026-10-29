@@ -66,7 +66,10 @@ describe("triage", () => {
     const created = m.tasksFor(item(), "task");
     const applied = m.applyTriage("i1", "processed", created)(data({ inbox: [item()] }));
     expect(applied.inbox[0].status).toBe("processed");
-    const reverted = m.revertTriage("i1", created.map((t) => t.id))(applied);
+    const reverted = m.revertTriage(
+      "i1",
+      created.map((t) => t.id),
+    )(applied);
     expect(reverted.tasks).toEqual([]);
     expect(reverted.inbox[0].status).toBe("inbox");
   });

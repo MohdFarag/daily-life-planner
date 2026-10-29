@@ -1,6 +1,6 @@
 import type { Config } from "../../shared/config.js";
 import { type Db, type Queryable, withTx } from "../../shared/db.js";
-import { ApiError, conflict, unauthorized } from "../../shared/errors.js";
+import { conflict, forbidden, unauthorized } from "../../shared/errors.js";
 import { type UserRow, usersRepository as users } from "../users/users.repository.js";
 import { authRepository as repo, type TokenHashes } from "./auth.repository.js";
 import { hashPassword, verifyPassword } from "./passwords.js";
@@ -39,7 +39,11 @@ export interface DeviceSession {
 const UNIQUE_VIOLATION = "23505";
 
 const toPublicUser = (u: UserRow): PublicUser => ({
-  id: u.id, email: u.email, displayName: u.displayName, locale: u.locale, createdAt: u.createdAt.toISOString(),
+  id: u.id,
+  email: u.email,
+  displayName: u.displayName,
+  locale: u.locale,
+  createdAt: u.createdAt.toISOString(),
 });
 
 /**
@@ -50,7 +54,10 @@ export class AuthService {
   // Checked when the email is unknown, so response timing does not reveal which accounts exist.
   private dummyHash?: Promise<string>;
 
-  constructor(private readonly db: Db, private readonly config: Config) {}
+  constructor(
+    private readonly db: Db,
+    private readonly config: Config,
+  ) {}
 
   async register(input: { email: string; password: string; displayName?: string; locale: string; deviceName?: string }) {
     const passwordHash = await hashPassword(input.password);
@@ -58,7 +65,10 @@ export class AuthService {
       return await withTx(this.db, async (tx) => {
         if (await users.findByEmail(tx, input.email)) throw this.emailTaken();
         const user = await users.insert(tx, {
-          email: input.email, passwordHash, displayName: input.displayName ?? null, locale: input.locale,
+          email: input.email,
+          passwordHash,
+          displayName: input.displayName ?? null,
+          locale: input.locale,
         });
         const tokens = await this.startSession(tx, user.id, input.deviceName);
         return { user: toPublicUser(user), tokens };
@@ -98,7 +108,7 @@ export class AuthService {
       await repo.rotateTokens(tx, session.id, hashes);
       return pair;
     });
-    if (outcome === "reused") throw new ApiError(401, "token_reused", "Refresh token was already used; the session has been signed out");
+    if (outcome === "reused") throw unauthorized("Refresh token was already used; the session has been signed out", "token_reused");
     if (outcome === "invalid") throw unauthorized("Refresh token is invalid or expired");
     return outcome;
   }
@@ -116,8 +126,11 @@ export class AuthService {
   async listSessions(principal: Principal): Promise<DeviceSession[]> {
     const sessions = await repo.listActiveSessions(this.db, principal.userId);
     return sessions.map((s) => ({
-      id: s.id, deviceName: s.deviceName, createdAt: s.createdAt.toISOString(),
-      lastUsedAt: s.lastUsedAt.toISOString(), current: s.id === principal.sessionId,
+      id: s.id,
+      deviceName: s.deviceName,
+      createdAt: s.createdAt.toISOString(),
+      lastUsedAt: s.lastUsedAt.toISOString(),
+      current: s.id === principal.sessionId,
     }));
   }
 
@@ -140,7 +153,7 @@ export class AuthService {
   async verifyCurrentPassword(principal: Principal, password: string): Promise<void> {
     const user = await users.findById(this.db, principal.userId);
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
-      throw new ApiError(403, "wrong_password", "Password is incorrect");
+      throw forbidden("wrong_password", "Password is incorrect");
     }
   }
 

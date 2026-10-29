@@ -15,8 +15,14 @@ export function CapturePreview({ item }: { item: InboxItem }) {
   return (
     <div className="card preview-card">
       <span className="badge badge-warning">{kindLabel(item.kind)}</span>
-      <h2 className="t-h2" style={{ margin: 0, overflowWrap: "anywhere" }}>{item.title}</h2>
-      {item.body && <p className="t-body c-secondary" style={{ whiteSpace: "pre-line" }}>{item.body}</p>}
+      <h2 className="t-h2" style={{ margin: 0, overflowWrap: "anywhere" }}>
+        {item.title}
+      </h2>
+      {item.body && (
+        <p className="t-body c-secondary" style={{ whiteSpace: "pre-line" }}>
+          {item.body}
+        </p>
+      )}
       {item.url && (
         <a
           className="t-label c-primary"
@@ -32,10 +38,16 @@ export function CapturePreview({ item }: { item: InboxItem }) {
         (blobUrl ? (
           <audio controls src={blobUrl} style={{ width: "100%" }} />
         ) : (
-          <span className="t-micro c-secondary">{s.n(formatClock(item.durationSec ?? 0))} · {s.t("audioSaved")}</span>
+          <span className="t-micro c-secondary">
+            {s.n(formatClock(item.durationSec ?? 0))} · {s.t("audioSaved")}
+          </span>
         ))}
       {item.kind === "photo" && blobUrl && <img src={blobUrl} alt="" style={{ width: "100%", borderRadius: 12 }} />}
-      {item.kind === "file" && blobUrl && <a className="t-label c-primary" href={blobUrl} download={item.fileName}>{item.fileName}</a>}
+      {item.kind === "file" && blobUrl && (
+        <a className="t-label c-primary" href={blobUrl} download={item.fileName}>
+          {item.fileName}
+        </a>
+      )}
       <div className="source-ref">
         <Icon size={18} strokeWidth={ICON_STROKE} />
         <span className="t-micro">{s.t("capturedOn", { when: rel(item.createdAt).toLowerCase() })}</span>

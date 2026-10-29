@@ -28,7 +28,11 @@ export function useTestApp(overrides: Partial<Record<keyof Config, string>> = {}
     await admin.query(`CREATE SCHEMA ${schema}`);
     mediaDir = await mkdtemp(path.join(tmpdir(), "planner-media-"));
     ctx.config = loadConfig({
-      DATABASE_URL: TEST_DATABASE_URL, MEDIA_DIR: mediaDir, LOG_LEVEL: "silent", AUTH_RATE_LIMIT_PER_MINUTE: "1000", ...overrides,
+      DATABASE_URL: TEST_DATABASE_URL,
+      MEDIA_DIR: mediaDir,
+      LOG_LEVEL: "silent",
+      AUTH_RATE_LIMIT_PER_MINUTE: "1000",
+      ...overrides,
     });
     ctx.db = createPool(TEST_DATABASE_URL, { options: `-c search_path=${schema}` });
     await migrate(ctx.db);

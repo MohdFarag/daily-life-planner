@@ -9,14 +9,21 @@ type Headers = { authorization: string };
 
 async function start(headers: Headers, bytes: Buffer, declaredSha = sha256(bytes)) {
   const res = await ctx.app.inject({
-    method: "POST", url: "/v1/media", headers,
+    method: "POST",
+    url: "/v1/media",
+    headers,
     payload: { filename: "voice.m4a", mimeType: "audio/mp4", sizeBytes: bytes.length, sha256: declaredSha },
   });
   return res;
 }
 
 const chunk = (headers: Headers, id: string, offset: number, body: Buffer) =>
-  ctx.app.inject({ method: "PUT", url: `/v1/media/${id}/content`, headers: { ...headers, "content-type": "application/octet-stream", "upload-offset": String(offset) }, payload: body });
+  ctx.app.inject({
+    method: "PUT",
+    url: `/v1/media/${id}/content`,
+    headers: { ...headers, "content-type": "application/octet-stream", "upload-offset": String(offset) },
+    payload: body,
+  });
 
 describe("media uploads", () => {
   it("uploads in chunks, resumes from the reported offset, verifies, and downloads", async () => {
@@ -63,7 +70,9 @@ describe("media uploads", () => {
   it("will not download an incomplete upload", async () => {
     const { headers } = await signUp(ctx);
     const created = (await start(headers, randomBytes(10))).json();
-    expect((await ctx.app.inject({ method: "GET", url: `/v1/media/${created.id}/content`, headers })).json().error.code).toBe("upload_incomplete");
+    expect((await ctx.app.inject({ method: "GET", url: `/v1/media/${created.id}/content`, headers })).json().error.code).toBe(
+      "upload_incomplete",
+    );
   });
 
   it("enforces the per-file limit and the account quota", async () => {

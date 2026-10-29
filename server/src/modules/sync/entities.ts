@@ -7,7 +7,14 @@ import { z } from "zod";
 // Timestamps are ISO-8601 instants (e.g. Kotlin Instant.toString()); server jobs parse them.
 const iso = z.iso.datetime({ offset: true });
 const shapes = {
-  items: { kind: z.string().max(16), title: z.string().max(2000), body: z.string().max(200_000), state: z.string().max(16), capturedAt: iso, purgeAt: iso },
+  items: {
+    kind: z.string().max(16),
+    title: z.string().max(2000),
+    body: z.string().max(200_000),
+    state: z.string().max(16),
+    capturedAt: iso,
+    purgeAt: iso,
+  },
   tasks: { title: z.string().max(2000), notes: z.string().max(200_000), listId: z.string().max(128), status: z.string().max(16) },
   lists: { name: z.string().max(200) },
   sessions: { taskId: z.string().max(128), start: iso, end: iso, state: z.string().max(16) },

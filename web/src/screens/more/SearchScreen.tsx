@@ -21,7 +21,9 @@ export function SearchScreen() {
         placeholder={s.t("searchPlaceholder")}
         aria-label={s.t("search")}
       />
-      {tasks.map((x) => <TaskRow key={x.id} task={x} />)}
+      {tasks.map((x) => (
+        <TaskRow key={x.id} task={x} />
+      ))}
       {items.map((i) => {
         const Icon = KIND_ICON[i.kind];
         return (
@@ -30,7 +32,9 @@ export function SearchScreen() {
             className="card inbox-item"
             onClick={() => (i.status === "inbox" ? s.go({ name: "process", itemId: i.id }) : s.go({ name: "collections" }))}
           >
-            <span className="type-icon"><Icon size={22} strokeWidth={ICON_STROKE} /></span>
+            <span className="type-icon">
+              <Icon size={22} strokeWidth={ICON_STROKE} />
+            </span>
             <span className="item-content">
               <span className="t-body truncate">{i.title}</span>
               <span className="t-micro c-secondary">{i.status === "inbox" ? s.t("inbox") : s.t("collections")}</span>

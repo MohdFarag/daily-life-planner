@@ -1,6 +1,6 @@
 # Daily Life Planner
 
-A mobile-first planner built from the Figma file *Daily Life Planner – Mobile UI* (Core mobile experience / v0.1).
+A mobile-first planner built from the Figma file _Daily Life Planner – Mobile UI_ (Core mobile experience / v0.1).
 
 ```bash
 npm install
@@ -13,17 +13,17 @@ On a phone the app fills the screen; on a wider screen it renders inside a 412 �
 
 ## Screens
 
-| Figma frame | Where |
-| --- | --- |
-| 01 Today, 10 Today (Arabic) | `src/screens/today/Today.tsx` (More → Preferences → العربية switches to RTL) |
-| 02 Inbox | `src/screens/inbox/Inbox.tsx` |
-| 03 Quick capture | `src/screens/capture/CaptureSheet.tsx` (+ button) |
-| 04 Process an item | `src/screens/process/Process.tsx` |
-| 05 Task detail, "Task / newly created" | `src/screens/task/TaskDetail.tsx` |
-| 06 Plan | `src/screens/plan/Plan.tsx` |
-| 07 Schedule a session | `src/screens/schedule/ScheduleSheet.tsx` |
-| 08 Focus, "Focus / paused" | `src/screens/focus/Focus.tsx` |
-| 09 More | `src/screens/more/More.tsx` (plus one file each for Tasks, Collections, Trash, Prayer times, Calendar, Preferences, Search) |
+| Figma frame                            | Where                                                                                                                       |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 01 Today, 10 Today (Arabic)            | `src/screens/today/Today.tsx` (More → Preferences → العربية switches to RTL)                                                |
+| 02 Inbox                               | `src/screens/inbox/Inbox.tsx`                                                                                               |
+| 03 Quick capture                       | `src/screens/capture/CaptureSheet.tsx` (+ button)                                                                           |
+| 04 Process an item                     | `src/screens/process/Process.tsx`                                                                                           |
+| 05 Task detail, "Task / newly created" | `src/screens/task/TaskDetail.tsx`                                                                                           |
+| 06 Plan                                | `src/screens/plan/Plan.tsx`                                                                                                 |
+| 07 Schedule a session                  | `src/screens/schedule/ScheduleSheet.tsx`                                                                                    |
+| 08 Focus, "Focus / paused"             | `src/screens/focus/Focus.tsx`                                                                                               |
+| 09 More                                | `src/screens/more/More.tsx` (plus one file each for Tasks, Collections, Trash, Prayer times, Calendar, Preferences, Search) |
 
 Design tokens (colors, radii, spacing, type styles) mirror the Figma variables in `src/styles.css`.
 

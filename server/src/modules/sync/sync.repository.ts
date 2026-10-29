@@ -38,12 +38,18 @@ export const syncRepository = {
 
   /** Takes the next version for a server-side change outside a client push. */
   async nextVersion(q: Queryable, userId: string): Promise<number> {
-    const { rows } = await q.query<{ v: number }>("UPDATE users SET sync_version = sync_version + 1 WHERE id = $1 RETURNING sync_version AS v", [userId]);
+    const { rows } = await q.query<{ v: number }>(
+      "UPDATE users SET sync_version = sync_version + 1 WHERE id = $1 RETURNING sync_version AS v",
+      [userId],
+    );
     return one(rows).v;
   },
 
   async findMutationResult<T>(q: Queryable, userId: string, mutationId: string): Promise<T | undefined> {
-    const { rows } = await q.query<{ result: T }>("SELECT result FROM mutations WHERE user_id = $1 AND mutation_id = $2", [userId, mutationId]);
+    const { rows } = await q.query<{ result: T }>("SELECT result FROM mutations WHERE user_id = $1 AND mutation_id = $2", [
+      userId,
+      mutationId,
+    ]);
     return rows[0]?.result;
   },
 
@@ -52,20 +58,30 @@ export const syncRepository = {
   },
 
   async findRecord(q: Queryable, userId: string, entity: Entity, id: string): Promise<RecordRow | undefined> {
-    const { rows } = await q.query<RecordRow>(`SELECT ${RECORD_COLUMNS} FROM records WHERE user_id = $1 AND entity = $2 AND id = $3`, [userId, entity, id]);
+    const { rows } = await q.query<RecordRow>(`SELECT ${RECORD_COLUMNS} FROM records WHERE user_id = $1 AND entity = $2 AND id = $3`, [
+      userId,
+      entity,
+      id,
+    ]);
     return rows[0];
   },
 
   async insertRecord(q: Queryable, userId: string, entity: Entity, id: string, w: RecordWrite): Promise<void> {
-    await q.query(
-      "INSERT INTO records (user_id, entity, id, doc, field_versions, version) VALUES ($1, $2, $3, $4, $5, $6)",
-      [userId, entity, id, w.doc, w.fieldVersions, w.version]);
+    await q.query("INSERT INTO records (user_id, entity, id, doc, field_versions, version) VALUES ($1, $2, $3, $4, $5, $6)", [
+      userId,
+      entity,
+      id,
+      w.doc,
+      w.fieldVersions,
+      w.version,
+    ]);
   },
 
   async updateRecord(q: Queryable, userId: string, entity: Entity, id: string, w: RecordWrite): Promise<void> {
     await q.query(
       "UPDATE records SET doc = $4, field_versions = $5, version = $6, updated_at = now() WHERE user_id = $1 AND entity = $2 AND id = $3",
-      [userId, entity, id, w.doc, w.fieldVersions, w.version]);
+      [userId, entity, id, w.doc, w.fieldVersions, w.version],
+    );
   },
 
   /** Replaces a record with a content-free deletion marker (creating it if needed). */
@@ -73,19 +89,23 @@ export const syncRepository = {
     await q.query(
       `INSERT INTO records (user_id, entity, id, doc, field_versions, version, deleted) VALUES ($1, $2, $3, '{}', '{}', $4, true)
        ON CONFLICT (user_id, entity, id) DO UPDATE SET doc = '{}', field_versions = '{}', version = $4, deleted = true, updated_at = now()`,
-      [userId, entity, id, version]);
+      [userId, entity, id, version],
+    );
   },
 
   async changesSince(q: Queryable, userId: string, since: number, limit: number): Promise<RecordRow[]> {
     const { rows } = await q.query<RecordRow>(
       `SELECT ${RECORD_COLUMNS} FROM records WHERE user_id = $1 AND version > $2 ORDER BY version LIMIT $3`,
-      [userId, since, limit]);
+      [userId, since, limit],
+    );
     return rows;
   },
 
   async liveRecords(q: Queryable, userId: string): Promise<RecordRow[]> {
     const { rows } = await q.query<RecordRow>(
-      `SELECT ${RECORD_COLUMNS} FROM records WHERE user_id = $1 AND NOT deleted ORDER BY entity, id`, [userId]);
+      `SELECT ${RECORD_COLUMNS} FROM records WHERE user_id = $1 AND NOT deleted ORDER BY entity, id`,
+      [userId],
+    );
     return rows;
   },
 
@@ -96,7 +116,8 @@ export const syncRepository = {
        WHERE entity = 'items' AND NOT deleted AND doc ->> 'state' = 'TRASHED'
          AND (doc ->> 'purgeAt')::timestamptz <= $1
        LIMIT $2`,
-      [now, limit]);
+      [now, limit],
+    );
     return rows;
   },
 

@@ -29,7 +29,8 @@ export const usersRepository = {
   async insert(q: Queryable, user: { email: string; passwordHash: string; displayName: string | null; locale: string }): Promise<UserRow> {
     const { rows } = await q.query<UserRow>(
       `INSERT INTO users (email, password_hash, display_name, locale) VALUES ($1, $2, $3, $4) RETURNING ${USER_COLUMNS}`,
-      [user.email, user.passwordHash, user.displayName, user.locale]);
+      [user.email, user.passwordHash, user.displayName, user.locale],
+    );
     return one(rows);
   },
 

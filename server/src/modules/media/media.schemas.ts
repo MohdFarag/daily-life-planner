@@ -2,7 +2,10 @@ import { z } from "zod";
 
 export const CreateMediaBody = z.object({
   filename: z.string().trim().min(1).max(255).optional(),
-  mimeType: z.string().regex(/^[\w.+-]+\/[\w.+-]+$/).max(127),
+  mimeType: z
+    .string()
+    .regex(/^[\w.+-]+\/[\w.+-]+$/)
+    .max(127),
   sizeBytes: z.number().int().positive(),
   sha256: z.string().regex(/^[0-9a-fA-F]{64}$/),
 });

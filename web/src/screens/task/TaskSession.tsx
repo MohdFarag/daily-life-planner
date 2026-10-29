@@ -37,7 +37,9 @@ export function TaskActions({ task, fresh }: { task: Task; fresh?: boolean }) {
     return (
       <div className="actions-bar">
         <Button onClick={() => s.setScheduleTaskId(task.id)}>{s.t("planSession")}</Button>
-        <Button variant="secondary" onClick={() => s.replace({ name: "process" })}>{s.t("continueProcessing")}</Button>
+        <Button variant="secondary" onClick={() => s.replace({ name: "process" })}>
+          {s.t("continueProcessing")}
+        </Button>
       </div>
     );
   }

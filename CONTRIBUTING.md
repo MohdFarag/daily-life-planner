@@ -19,13 +19,14 @@ cd android
 
 Kotlin is formatted with [ktfmt](https://github.com/facebook/ktfmt) in the Kotlin style; run
 `./gradlew -p core ktfmtFormat` and `./gradlew :app:ktfmtFormat` before committing.
+TypeScript (server and web) is formatted with Prettier (`.prettierrc.json`); run `npm run format`.
 
 ```bash
-cd server && npm ci && npm run lint && npm run typecheck && npm test   # needs PostgreSQL, see server/README.md
+cd server && npm ci && npm run format:check && npm run lint && npm run typecheck && npm test   # needs PostgreSQL, see server/README.md
 ```
 
 ```bash
-cd web && npm ci && npm test && npm run build
+cd web && npm ci && npm run format:check && npm test && npm run build
 ```
 
 Dependency versions live in `android/gradle/libs.versions.toml`; Dependabot proposes updates weekly.

@@ -25,7 +25,9 @@ export function TimeFields({ mode, start, onStart, prayer, onPrayer, duration, o
         {mode === "prayer" ? (
           <select value={prayer} onChange={(e) => onPrayer(e.target.value)}>
             {PRAYERS.map((p) => (
-              <option key={p.key} value={p.key}>{s.prayerName(p.key)}</option>
+              <option key={p.key} value={p.key}>
+                {s.prayerName(p.key)}
+              </option>
             ))}
           </select>
         ) : (
@@ -36,7 +38,9 @@ export function TimeFields({ mode, start, onStart, prayer, onPrayer, duration, o
         <span className="t-micro c-secondary">{s.t("duration")}</span>
         <select value={duration} onChange={(e) => onDuration(Number(e.target.value))}>
           {durations.map((d) => (
-            <option key={d} value={d}>{s.t("minutes", { n: d })}</option>
+            <option key={d} value={d}>
+              {s.t("minutes", { n: d })}
+            </option>
           ))}
         </select>
       </label>

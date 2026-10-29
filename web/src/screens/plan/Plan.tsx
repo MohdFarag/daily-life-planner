@@ -38,9 +38,20 @@ export function Plan() {
         )}
 
         <div className="legend t-micro">
-          <span><i style={{ background: KIND_COLOR.task }} />{s.t("tasks")}</span>
-          <span><i style={{ background: "var(--color-primary)", opacity: 0.35 }} />{s.t("prayers")}</span>
-          {s.data.showGoogle && <span><i style={{ background: KIND_COLOR.google }} />{s.t("google")}</span>}
+          <span>
+            <i style={{ background: KIND_COLOR.task }} />
+            {s.t("tasks")}
+          </span>
+          <span>
+            <i style={{ background: "var(--color-primary)", opacity: 0.35 }} />
+            {s.t("prayers")}
+          </span>
+          {s.data.showGoogle && (
+            <span>
+              <i style={{ background: KIND_COLOR.google }} />
+              {s.t("google")}
+            </span>
+          )}
         </div>
         <UnplannedTasks />
       </div>

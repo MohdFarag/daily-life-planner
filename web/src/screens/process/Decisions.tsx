@@ -12,8 +12,12 @@ export function Decisions({ onDecide }: { onDecide: (action: TriageAction) => vo
       <p className="t-h3">{s.t("whatBecome")}</p>
       <div className="stack-8">
         <Button onClick={() => onDecide("task")}>{s.t("createTask")}</Button>
-        <Button variant="secondary" onClick={() => onDecide("now")}>{s.t("doNow")}</Button>
-        <Button variant="secondary" onClick={() => onDecide("reference")}>{s.t("saveReference")}</Button>
+        <Button variant="secondary" onClick={() => onDecide("now")}>
+          {s.t("doNow")}
+        </Button>
+        <Button variant="secondary" onClick={() => onDecide("reference")}>
+          {s.t("saveReference")}
+        </Button>
         <button className="row-between" style={{ minHeight: 48 }} aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
           <span className="t-small c-secondary">{s.t("otherDecisions")}</span>
           <Ellipsis size={24} strokeWidth={ICON_STROKE} className="c-secondary" />

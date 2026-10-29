@@ -53,7 +53,9 @@ export function CaptureSheet() {
   return (
     <Sheet onClose={close} label={s.t("captureSomething")}>
       <div className="title-row">
-        <h2 className="t-h2" style={{ margin: 0 }}>{s.t("captureSomething")}</h2>
+        <h2 className="t-h2" style={{ margin: 0 }}>
+          {s.t("captureSomething")}
+        </h2>
         <IconButton icon={X} label={s.t("closeCapture")} onClick={close} />
       </div>
       <p className="t-small c-secondary">{s.t("captureSubtitle")}</p>
@@ -79,7 +81,9 @@ export function CaptureSheet() {
         <CloudCheck size={18} strokeWidth={ICON_STROKE} />
         <span className="t-micro">{s.t("worksOffline")}</span>
       </div>
-      <Button onClick={save} disabled={!canSave}>{s.t("saveToInbox")}</Button>
+      <Button onClick={save} disabled={!canSave}>
+        {s.t("saveToInbox")}
+      </Button>
       <p className="t-micro c-secondary">{s.t("captureFooter")}</p>
     </Sheet>
   );

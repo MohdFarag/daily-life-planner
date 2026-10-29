@@ -21,7 +21,11 @@ export function VoiceRecorder({ voice }: { voice: ReturnType<typeof useVoiceReco
           <audio controls src={playback ?? undefined} style={{ width: "100%" }} />
         </>
       )}
-      {voice.error && <span className="t-micro" style={{ color: "var(--color-warningText)" }}>{s.t("micUnavailable")}</span>}
+      {voice.error && (
+        <span className="t-micro" style={{ color: "var(--color-warningText)" }}>
+          {s.t("micUnavailable")}
+        </span>
+      )}
     </div>
   );
 }

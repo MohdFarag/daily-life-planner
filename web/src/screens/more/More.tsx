@@ -27,17 +27,36 @@ export function More() {
         <section className="stack-8">
           <span className="t-micro c-secondary section-label">{s.t("yourSpace")}</span>
           <Row icon={ListChecks} title={s.t("tasks")} subtitle={s.t("openTasksSub", { n: open })} onClick={() => s.go({ name: "tasks" })} />
-          <Row icon={FolderOpen} title={s.t("collections")} subtitle={s.t("collectionsSub")} onClick={() => s.go({ name: "collections" })} />
+          <Row
+            icon={FolderOpen}
+            title={s.t("collections")}
+            subtitle={s.t("collectionsSub")}
+            onClick={() => s.go({ name: "collections" })}
+          />
         </section>
         <section className="stack-8">
           <span className="t-micro c-secondary section-label">{s.t("settings")}</span>
-          <Row icon={Moon} title={s.t("prayerTimes")} subtitle={s.t("prayerSub", { state: s.data.protectPrayers ? s.t("on") : s.t("off") })} onClick={() => s.go({ name: "prayers" })} />
-          <Row icon={CalendarDays} title={s.t("googleCalendar")} subtitle={s.t("googleSub", { state: s.data.showGoogle ? s.t("shown") : s.t("hidden") })} onClick={() => s.go({ name: "google" })} />
+          <Row
+            icon={Moon}
+            title={s.t("prayerTimes")}
+            subtitle={s.t("prayerSub", { state: s.data.protectPrayers ? s.t("on") : s.t("off") })}
+            onClick={() => s.go({ name: "prayers" })}
+          />
+          <Row
+            icon={CalendarDays}
+            title={s.t("googleCalendar")}
+            subtitle={s.t("googleSub", { state: s.data.showGoogle ? s.t("shown") : s.t("hidden") })}
+            onClick={() => s.go({ name: "google" })}
+          />
           <Row icon={Settings2} title={s.t("preferences")} subtitle={s.t("preferencesSub")} onClick={() => s.go({ name: "prefs" })} />
         </section>
         <div className="data-controls">
-          <button className="link-btn" onClick={s.exportData}>{s.t("exportData")}</button>
-          <button className="link-btn" onClick={() => s.go({ name: "trash" })}>{s.t("trashTitle")}</button>
+          <button className="link-btn" onClick={s.exportData}>
+            {s.t("exportData")}
+          </button>
+          <button className="link-btn" onClick={() => s.go({ name: "trash" })}>
+            {s.t("trashTitle")}
+          </button>
         </div>
       </div>
       <Fab />

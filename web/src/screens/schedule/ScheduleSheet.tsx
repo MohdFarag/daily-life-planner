@@ -47,7 +47,9 @@ function ScheduleForm({ task }: { task: Task }) {
   return (
     <Sheet onClose={close} label={s.t("planSession")}>
       <div className="title-row">
-        <h2 className="t-h2" style={{ margin: 0 }}>{s.t("planSession")}</h2>
+        <h2 className="t-h2" style={{ margin: 0 }}>
+          {s.t("planSession")}
+        </h2>
         <IconButton icon={X} label={s.t("closeSchedule")} onClick={close} />
       </div>
       <p className="t-small c-secondary">

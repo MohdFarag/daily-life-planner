@@ -7,7 +7,9 @@ export function TaskRow({ task, meta }: { task: Task; meta?: string }) {
   const s = useStore();
   const metadata =
     meta ??
-    [task.session ? s.n(task.session.start) : null, `${s.n(task.estimate)} ${s.t("min")}`, s.listName(task.list)].filter(Boolean).join(" · ");
+    [task.session ? s.n(task.session.start) : null, `${s.n(task.estimate)} ${s.t("min")}`, s.listName(task.list)]
+      .filter(Boolean)
+      .join(" · ");
   return (
     <div className={`task-row${task.done ? " done" : ""}`}>
       <button
@@ -20,7 +22,9 @@ export function TaskRow({ task, meta }: { task: Task; meta?: string }) {
         <Checkbox checked={task.done} />
       </button>
       <button className="task-info" onClick={() => s.go({ name: "task", id: task.id })}>
-        <span className="t-body task-title truncate" style={{ maxWidth: "100%" }}>{s.taskTitle(task)}</span>
+        <span className="t-body task-title truncate" style={{ maxWidth: "100%" }}>
+          {s.taskTitle(task)}
+        </span>
         <span className="t-micro c-secondary">{metadata}</span>
       </button>
     </div>

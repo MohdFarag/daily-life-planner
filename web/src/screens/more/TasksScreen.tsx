@@ -18,11 +18,21 @@ export function TasksScreen() {
           </button>
         ))}
       </div>
-      <span className="t-micro c-secondary">{s.t("open")} · {s.n(open.length)}</span>
-      {open.map((x) => <TaskRow key={x.id} task={x} />)}
+      <span className="t-micro c-secondary">
+        {s.t("open")} · {s.n(open.length)}
+      </span>
+      {open.map((x) => (
+        <TaskRow key={x.id} task={x} />
+      ))}
       {!tasks.length && <Empty icon={ListChecks} title={s.t("noTasks")} />}
-      {done.length > 0 && <span className="t-micro c-secondary">{s.t("completed")} · {s.n(done.length)}</span>}
-      {done.map((x) => <TaskRow key={x.id} task={x} />)}
+      {done.length > 0 && (
+        <span className="t-micro c-secondary">
+          {s.t("completed")} · {s.n(done.length)}
+        </span>
+      )}
+      {done.map((x) => (
+        <TaskRow key={x.id} task={x} />
+      ))}
     </SubScreen>
   );
 }

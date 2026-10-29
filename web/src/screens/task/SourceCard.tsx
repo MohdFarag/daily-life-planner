@@ -17,7 +17,9 @@ export function SourceCard({ source }: { source: Source }) {
       <button className="link-card" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <Icon size={24} strokeWidth={ICON_STROKE} />
         <span style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <span className="t-label" style={{ color: "var(--color-text)" }}>{s.t("originalNote")}</span>
+          <span className="t-label" style={{ color: "var(--color-text)" }}>
+            {s.t("originalNote")}
+          </span>
           <span className="t-micro c-secondary">{s.t("openSource")}</span>
         </span>
         <ChevronRight size={18} strokeWidth={ICON_STROKE} className="flip-rtl" style={{ transform: open ? "rotate(90deg)" : undefined }} />
@@ -25,11 +27,23 @@ export function SourceCard({ source }: { source: Source }) {
       {open && (
         <div style={{ padding: "0 16px 16px" }} className="stack-8">
           <p className="t-body">{source.title}</p>
-          {source.body && <p className="t-small c-secondary" style={{ whiteSpace: "pre-line" }}>{source.body}</p>}
-          {source.url && <a className="t-label c-primary" href={source.url} target="_blank" rel="noreferrer">{source.url}</a>}
+          {source.body && (
+            <p className="t-small c-secondary" style={{ whiteSpace: "pre-line" }}>
+              {source.body}
+            </p>
+          )}
+          {source.url && (
+            <a className="t-label c-primary" href={source.url} target="_blank" rel="noreferrer">
+              {source.url}
+            </a>
+          )}
           {blobUrl && source.kind === "voice" && <audio controls src={blobUrl} style={{ width: "100%" }} />}
           {blobUrl && source.kind === "photo" && <img src={blobUrl} alt="" style={{ width: "100%", borderRadius: 12 }} />}
-          {blobUrl && source.kind === "file" && <a className="t-label c-primary" href={blobUrl} download={source.fileName}>{source.fileName}</a>}
+          {blobUrl && source.kind === "file" && (
+            <a className="t-label c-primary" href={blobUrl} download={source.fileName}>
+              {source.fileName}
+            </a>
+          )}
           <p className="t-micro c-secondary">{rel(source.createdAt)}</p>
         </div>
       )}

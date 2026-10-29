@@ -32,7 +32,15 @@ export function AgendaList({ items, onOpen }: { items: Busy[]; onOpen: (b: Busy)
 }
 
 /** Each day of the week with its tasks and events (prayers are left out to keep it short). */
-export function WeekAgenda({ selected, onOpen, onPickDay }: { selected: string; onOpen: (b: Busy) => void; onPickDay: (iso: string) => void }) {
+export function WeekAgenda({
+  selected,
+  onOpen,
+  onPickDay,
+}: {
+  selected: string;
+  onOpen: (b: Busy) => void;
+  onPickDay: (iso: string) => void;
+}) {
   const s = useStore();
   const today = todayISO();
   return (

@@ -33,7 +33,9 @@ export function DayTimeline({ date, busy, onOpen }: { date: string; busy: Busy[]
         </div>
         {HOURS.map((m) => (
           <div key={m}>
-            <span className="hour-label t-micro" style={{ top: px(m) }}>{s.n(fromMin(m))}</span>
+            <span className="hour-label t-micro" style={{ top: px(m) }}>
+              {s.n(fromMin(m))}
+            </span>
             <div className="hour-rule" style={{ top: px(m) }} />
           </div>
         ))}

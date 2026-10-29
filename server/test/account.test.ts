@@ -8,12 +8,16 @@ describe("account", () => {
   it("exports live records and a media manifest, without deleted records", async () => {
     const { headers, email } = await signUp(ctx);
     await ctx.app.inject({
-      method: "POST", url: "/v1/sync/push", headers,
-      payload: { mutations: [
-        { mutationId: randomUUID(), entity: "lists", id: "work", op: "upsert", baseVersion: 0, fields: { name: "Work" } },
-        { mutationId: randomUUID(), entity: "lists", id: "old", op: "upsert", baseVersion: 0, fields: { name: "Old" } },
-        { mutationId: randomUUID(), entity: "lists", id: "old", op: "delete", baseVersion: 2 },
-      ] },
+      method: "POST",
+      url: "/v1/sync/push",
+      headers,
+      payload: {
+        mutations: [
+          { mutationId: randomUUID(), entity: "lists", id: "work", op: "upsert", baseVersion: 0, fields: { name: "Work" } },
+          { mutationId: randomUUID(), entity: "lists", id: "old", op: "upsert", baseVersion: 0, fields: { name: "Old" } },
+          { mutationId: randomUUID(), entity: "lists", id: "old", op: "delete", baseVersion: 2 },
+        ],
+      },
     });
     const res = await ctx.app.inject({ method: "GET", url: "/v1/account/export", headers });
     expect(res.statusCode).toBe(200);
