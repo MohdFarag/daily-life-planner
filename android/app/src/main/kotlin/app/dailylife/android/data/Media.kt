@@ -35,7 +35,7 @@ object Media {
             resolver.openInputStream(uri)?.use { input -> target.outputStream().use { input.copyTo(it) } } != null
         }.getOrDefault(false)
         if (!ok) { target.delete(); return null }
-        return Attachment(id, target.absolutePath, mime, target.length(), durationOf(target, mime))
+        return Attachment(id, target.absolutePath, mime, target.length(), durationOf(target, mime), name = displayName(resolver, uri))
     }
 
     fun fromFile(file: File, mime: String) = Attachment(UUID.randomUUID().toString(), file.absolutePath, mime, file.length(), durationOf(file, mime))

@@ -31,6 +31,8 @@ data class Attachment(
     val sizeBytes: Long,
     val durationMs: Long? = null,
     val uploadState: UploadState = UploadState.LOCAL_ONLY,
+    /** Original file name when known (picked or shared files); null for camera and microphone captures. */
+    val name: String? = null,
 )
 
 /** One entry of a captured list; each has its own id so it can be processed alone (CAP04). */

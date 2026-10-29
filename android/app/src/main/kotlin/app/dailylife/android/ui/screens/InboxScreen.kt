@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import app.dailylife.android.AppViewModel
 import app.dailylife.android.Screen
 import app.dailylife.android.data.Snapshot
+import app.dailylife.android.ui.itemTitle
 import app.dailylife.android.ui.Btn
 import app.dailylife.android.ui.C
 import app.dailylife.android.ui.Chip
@@ -99,7 +100,7 @@ fun InboxCard(item: CaptureItem, lang: String, onClick: () -> Unit) {
             Icon(kindIcon(item.kind), null, tint = C.primary)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(item.title, style = T.body, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(itemTitle(item, lang), style = T.body, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(subtitle, style = T.micro)
             if (detail.isNotBlank()) Text(detail, style = T.small, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
