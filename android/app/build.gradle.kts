@@ -2,7 +2,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ktfmt)
 }
+
+ktfmt { kotlinLangStyle() }
 
 // Release signing comes from the environment (CI secrets); without it, release builds are unsigned.
 val keystorePath: String? = System.getenv("ANDROID_KEYSTORE_PATH")

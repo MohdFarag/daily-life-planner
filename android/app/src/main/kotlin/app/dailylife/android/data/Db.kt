@@ -7,16 +7,20 @@ import android.database.sqlite.SQLiteOpenHelper
 import org.json.JSONObject
 
 /**
- * Local database. Each entity is stored as a JSON document keyed by id, with indexed columns
- * where queries need them. Writes are synchronous and durable before a save is confirmed (CAP02).
+ * Local database. Each entity is stored as a JSON document keyed by id, with indexed columns where
+ * queries need them. Writes are synchronous and durable before a save is confirmed (CAP02).
  */
 class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 1) {
 
     enum class Table(val sql: String) {
-        items("CREATE TABLE items (id TEXT PRIMARY KEY, state TEXT NOT NULL, captured_at TEXT NOT NULL, doc TEXT NOT NULL)"),
+        items(
+            "CREATE TABLE items (id TEXT PRIMARY KEY, state TEXT NOT NULL, captured_at TEXT NOT NULL, doc TEXT NOT NULL)"
+        ),
         tasks("CREATE TABLE tasks (id TEXT PRIMARY KEY, doc TEXT NOT NULL)"),
         lists("CREATE TABLE lists (id TEXT PRIMARY KEY, doc TEXT NOT NULL)"),
-        sessions("CREATE TABLE sessions (id TEXT PRIMARY KEY, task_id TEXT NOT NULL, doc TEXT NOT NULL)"),
+        sessions(
+            "CREATE TABLE sessions (id TEXT PRIMARY KEY, task_id TEXT NOT NULL, doc TEXT NOT NULL)"
+        ),
         rules("CREATE TABLE rules (id TEXT PRIMARY KEY, task_id TEXT NOT NULL, doc TEXT NOT NULL)"),
         blocks("CREATE TABLE blocks (id TEXT PRIMARY KEY, doc TEXT NOT NULL)"),
         events("CREATE TABLE events (id TEXT PRIMARY KEY, doc TEXT NOT NULL)"),
@@ -54,11 +58,12 @@ class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 1) {
     }
 
     fun put(table: Table, id: String, doc: JSONObject, extra: Map<String, String> = emptyMap()) {
-        val v = ContentValues().apply {
-            put("id", id)
-            put("doc", doc.toString())
-            extra.forEach { (k, value) -> put(k, value) }
-        }
+        val v =
+            ContentValues().apply {
+                put("id", id)
+                put("doc", doc.toString())
+                extra.forEach { (k, value) -> put(k, value) }
+            }
         writableDatabase.insertWithOnConflict(table.name, null, v, SQLiteDatabase.CONFLICT_REPLACE)
     }
 
