@@ -8,8 +8,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
@@ -22,8 +25,9 @@ import kotlinx.coroutines.withContext
 /** A photo from app storage, decoded off the main thread at screen size and upright per its EXIF data. */
 @Composable
 fun ImagePreview(path: String, contentDescription: String?, modifier: Modifier = Modifier) {
-    val image by produceState<ImageBitmap?>(null, path) {
-        value = withContext(Dispatchers.IO) { runCatching { decodeUpright(path, maxSide = 1440) }.getOrNull() }
+    var image by remember(path) { mutableStateOf<ImageBitmap?>(null) }
+    LaunchedEffect(path) {
+        image = withContext(Dispatchers.IO) { runCatching { decodeUpright(path, maxSide = 1440) }.getOrNull() }
     }
     image?.let {
         Image(
