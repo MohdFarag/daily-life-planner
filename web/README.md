@@ -22,9 +22,23 @@ On a phone the app fills the screen; on a wider screen it renders inside a 412 Ã
 | 06 Plan | `src/screens/Plan.tsx` |
 | 07 Schedule a session | `src/screens/ScheduleSheet.tsx` |
 | 08 Focus, "Focus / paused" | `src/screens/Focus.tsx` |
-| 09 More | `src/screens/More.tsx` (plus Tasks, Collections, Trash, Prayer times, Calendar, Preferences, Search) |
+| 09 More | `src/screens/more/More.tsx` (plus one file each for Tasks, Collections, Trash, Prayer times, Calendar, Preferences, Search) |
 
 Design tokens (colors, radii, spacing, type styles) mirror the Figma variables in `src/styles.css`.
+
+## Code layout
+
+```
+src/
+  main.tsx, App.tsx   entry point; the phone frame and screen switch
+  screens/            one file per screen (screens/more/ for the More tab's sub-screens)
+  components/         shared UI: app chrome, controls, layout, rows, icons
+  hooks/              reusable React hooks (ticker, blob URLs, item labels)
+  state/              data types, sample data, persistence, pure data transforms
+                      (mutations.ts, schedule.ts) and the store that wires them to React
+  i18n/               English and Arabic strings, translation and digit helpers
+  lib/                framework-free helpers: time math, ids, IndexedDB blobs, downloads
+```
 
 ## Data
 

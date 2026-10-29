@@ -1,8 +1,9 @@
 import { CloudCheck, CloudOff, Inbox as InboxIcon } from "lucide-react";
 import { useState } from "react";
-import { Button, Empty, Fab, ICON_STROKE, KIND_ICON, PageHeading, itemSubtitle, useKindLabel, useRelativeTime } from "../components";
-import { useStore, type InboxItem } from "../store";
-import { formatClock } from "../time";
+import { Button, Empty, Fab, ICON_STROKE, KIND_ICON, PageHeading } from "../components";
+import { itemSubtitle, useKindLabel, useRelativeTime } from "../hooks/useItemLabels";
+import { formatClock } from "../lib/time";
+import { type InboxItem, useStore } from "../state";
 
 type Filter = "all" | "notes" | "links";
 

@@ -1,0 +1,54 @@
+import { uid } from "../lib/ids";
+import { addDays, todayISO } from "../lib/time";
+import type { Data } from "./types";
+
+/** Sample data shown on first launch and after a reset. */
+export function seed(): Data {
+  const today = todayISO();
+  const now = Date.now();
+  const H = 3600_000;
+  return {
+    lang: "en",
+    protectPrayers: true,
+    showGoogle: true,
+    focus: null,
+    tasks: [
+      {
+        id: uid(), title: "Review project brief", titleAr: "مراجعة متطلبات المشروع",
+        notes: "Outline the key design decisions.", notesAr: "تلخيص القرارات الأساسية",
+        list: "Work", estimate: 45, important: true, done: false,
+        session: { date: today, start: "10:00", duration: 45 },
+        source: { kind: "text", title: "Review project brief", body: "Review the new project brief and outline the key decisions before the design review.", createdAt: now - 2 * H },
+      },
+      {
+        id: uid(), title: "Read 10 pages", titleAr: "قراءة ١٠ صفحات", notes: "Pick up where you left off.", notesAr: "تابع من حيث توقفت",
+        list: "Personal", estimate: 20, important: false, done: false,
+        session: { date: today, start: "11:15", duration: 20 },
+      },
+      {
+        id: uid(), title: "Send design update", titleAr: "إرسال تحديث التصميم", notes: "Share the latest screens with the team.",
+        list: "Work", estimate: 15, important: false, done: false,
+        session: { date: today, start: "13:30", duration: 15 },
+      },
+      { id: uid(), title: "Morning walk", titleAr: "نزهة الصباح", notes: "", list: "Personal", estimate: 30, important: false, done: true, doneOn: today },
+      { id: uid(), title: "Plan the week", titleAr: "تخطيط الأسبوع", notes: "", list: "Work", estimate: 15, important: false, done: true, doneOn: today },
+      { id: uid(), title: "Book dentist appointment", titleAr: "حجز موعد طبيب الأسنان", notes: "", list: "Personal", estimate: 10, important: false, done: false },
+      {
+        id: uid(), title: "Prepare review slides", titleAr: "تحضير شرائح المراجعة", notes: "Summarize decisions from the brief.",
+        list: "Work", estimate: 60, important: false, done: false,
+        session: { date: addDays(today, 1), start: "09:30", duration: 60 },
+      },
+    ],
+    inbox: [
+      { id: uid(), kind: "text", title: "Review project brief", body: "Outline the key design decisions.", createdAt: now - 20_000, status: "inbox" },
+      { id: uid(), kind: "link", title: "A reading list for winter", body: "Books, articles, and things to explore.", origin: "Keep", url: "https://example.com/winter-reading", createdAt: now - 2 * H, status: "inbox" },
+      { id: uid(), kind: "voice", title: "Ideas from the walk", body: "", createdAt: now - 26 * H, status: "inbox", durationSec: 138 },
+      { id: uid(), kind: "text", title: "Call the plumber about the kitchen tap", body: "Ask about Thursday morning.\nGet a quote first.", createdAt: now - 50 * H, status: "inbox" },
+      { id: uid(), kind: "link", title: "Lentil soup recipe", body: "Try it this weekend.", url: "https://example.com/lentil-soup", createdAt: now - 74 * H, status: "inbox" },
+    ],
+    events: [
+      { id: uid(), title: "Design review", titleAr: "مراجعة التصميم", date: today, start: "13:00", duration: 30 },
+      { id: uid(), title: "Team sync", titleAr: "اجتماع الفريق", date: addDays(today, 1), start: "11:00", duration: 30 },
+    ],
+  };
+}

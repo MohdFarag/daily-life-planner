@@ -2,8 +2,8 @@ import { AlertTriangle, CalendarDays, Check, X } from "lucide-react";
 import { useState } from "react";
 import { Button, ICON_STROKE, IconButton, Sheet } from "../components";
 import { locale } from "../i18n";
-import { PRAYERS, PRAYER_MIN, WORK_BLOCK, useStore } from "../store";
-import { fromMin, nowMin, overlaps, parseISO, toMin, todayISO } from "../time";
+import { fromMin, nowMin, overlaps, parseISO, todayISO, toMin } from "../lib/time";
+import { PRAYER_MIN, PRAYERS, useStore, WORK_BLOCK } from "../state";
 
 const DURATIONS = [10, 15, 20, 30, 45, 60, 90, 120];
 

@@ -1,9 +1,9 @@
 import { ChevronDown, Ellipsis, Plus, Timer } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { BackIcon, Button, Empty, Gesture, IconButton } from "../components";
-import { MenuItem } from "./Process";
-import { useStore, useTicker } from "../store";
-import { formatClock, fromMin, nowMin } from "../time";
+import { BackIcon, Button, Empty, Gesture, IconButton, MenuItem } from "../components";
+import { useTicker } from "../hooks/useTicker";
+import { formatClock, fromMin, nowMin } from "../lib/time";
+import { useStore } from "../state";
 
 const SIZE = 272;
 const R = 130;

@@ -1,9 +1,10 @@
 import { CloudCheck, Mic, Square, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ICON_STROKE, IconButton, KIND_ICON, Sheet } from "../components";
-import { putBlob } from "../blobs";
-import { uid, useStore, type ItemKind } from "../store";
-import { formatClock } from "../time";
+import { putBlob } from "../lib/blobs";
+import { uid } from "../lib/ids";
+import { formatClock } from "../lib/time";
+import { type ItemKind, useStore } from "../state";
 
 type Mode = Exclude<ItemKind, "link">;
 

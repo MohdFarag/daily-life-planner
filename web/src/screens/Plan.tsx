@@ -1,9 +1,10 @@
 import { CalendarPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Fab, ICON_STROKE, PageHeading } from "../components";
+import { useTicker } from "../hooks/useTicker";
 import { locale } from "../i18n";
-import { WORK_BLOCK, useStore, useTicker, type Busy } from "../store";
-import { fromMin, nowMin, parseISO, toMin, todayISO, weekOf } from "../time";
+import { fromMin, nowMin, parseISO, todayISO, toMin, weekOf } from "../lib/time";
+import { type Busy, useStore, WORK_BLOCK } from "../state";
 
 const HOUR_PX = 74.4;
 const DAY_START = 6 * 60;

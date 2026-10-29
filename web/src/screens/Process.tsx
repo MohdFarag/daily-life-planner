@@ -1,9 +1,10 @@
 import { Archive, CheckCheck, Clock3, Ellipsis, ExternalLink, Scissors, Trash2, Undo2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button, Empty, Gesture, ICON_STROKE, IconButton, KIND_ICON, BackIcon, useKindLabel, useRelativeTime } from "../components";
-import { getBlob } from "../blobs";
-import { useStore, type TriageAction } from "../store";
-import { formatClock } from "../time";
+import { BackIcon, Button, Empty, Gesture, ICON_STROKE, IconButton, KIND_ICON, MenuItem } from "../components";
+import { useBlobUrl } from "../hooks/useBlobUrl";
+import { useKindLabel, useRelativeTime } from "../hooks/useItemLabels";
+import { formatClock } from "../lib/time";
+import { type TriageAction, useStore } from "../state";
 
 export function Process({ itemId }: { itemId?: string }) {
   const s = useStore();
@@ -122,31 +123,4 @@ export function Process({ itemId }: { itemId?: string }) {
       <Gesture standalone />
     </>
   );
-}
-
-export function MenuItem({ icon: Icon, label, onClick, danger }: { icon: typeof Trash2; label: string; onClick: () => void; danger?: boolean }) {
-  return (
-    <button role="menuitem" className={`menu-item${danger ? " danger" : ""}`} onClick={onClick}>
-      <Icon size={20} strokeWidth={ICON_STROKE} />
-      {label}
-    </button>
-  );
-}
-
-export function useBlobUrl(blobId?: string) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    setUrl(null);
-    if (!blobId) return;
-    let objectUrl: string | null = null;
-    getBlob(blobId)
-      .then((b) => {
-        if (b) setUrl((objectUrl = URL.createObjectURL(b)));
-      })
-      .catch(() => undefined);
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [blobId]);
-  return url;
 }

@@ -1,8 +1,9 @@
 import { CalendarPlus, Clock } from "lucide-react";
 import { Button, Fab, ICON_STROKE, PageHeading, PrayerRow, TaskRow } from "../components";
+import { useTicker } from "../hooks/useTicker";
 import { locale } from "../i18n";
-import { PRAYERS, PRAYER_MIN, useStore, useTicker } from "../store";
-import { fromMin, nowMin, toMin, todayISO } from "../time";
+import { fromMin, nowMin, todayISO, toMin } from "../lib/time";
+import { PRAYER_MIN, PRAYERS, useStore } from "../state";
 
 export function Today() {
   useTicker(60_000);

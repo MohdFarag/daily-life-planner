@@ -1,10 +1,11 @@
 import { CalendarX, ChevronRight, Ellipsis, Star, Trash2 } from "lucide-react";
-import { useLayoutEffect, useRef, useState, type TextareaHTMLAttributes } from "react";
-import { BackIcon, Button, Empty, Gesture, ICON_STROKE, IconButton, KIND_ICON, useRelativeTime } from "../components";
-import { MenuItem, useBlobUrl } from "./Process";
+import { type TextareaHTMLAttributes, useLayoutEffect, useRef, useState } from "react";
+import { BackIcon, Button, Empty, Gesture, ICON_STROKE, IconButton, KIND_ICON, MenuItem } from "../components";
+import { useBlobUrl } from "../hooks/useBlobUrl";
+import { useRelativeTime } from "../hooks/useItemLabels";
 import { locale } from "../i18n";
-import { WORK_BLOCK, useStore } from "../store";
-import { parseISO, toMin, todayISO } from "../time";
+import { parseISO, todayISO, toMin } from "../lib/time";
+import { useStore, WORK_BLOCK } from "../state";
 
 const ESTIMATES = [10, 15, 20, 30, 45, 60, 90, 120];
 
