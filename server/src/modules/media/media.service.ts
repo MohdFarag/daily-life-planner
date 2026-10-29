@@ -60,22 +60,32 @@ export class MediaService {
   }
 
   async appendChunk(userId: string, id: string, offset: number, chunk: Buffer): Promise<MediaInfo> {
-    return withTx(this.db, async (tx) => {
+    // Failures that reset the upload are returned, not thrown, so the reset commits with the transaction.
+    const outcome = await withTx(this.db, async (tx): Promise<MediaRow | "reset" | "checksum_mismatch"> => {
       const media = await repo.find(tx, userId, id, true);
       if (!media) throw notFound("Media");
       if (media.status === "complete") throw conflict("already_complete", "Upload is already complete");
       if (offset !== media.receivedBytes) throw new ApiError(409, "offset_mismatch", `Expected offset ${media.receivedBytes}`);
       if (offset + chunk.length > media.sizeBytes) throw new ApiError(400, "too_many_bytes", "Chunk exceeds the declared size");
 
-      const received = await this.writeChunk(tx, media, offset, chunk);
-      if (received < media.sizeBytes) return toInfo(await repo.setReceived(tx, id, received));
+      const received = await this.writeChunk(media, offset, chunk);
+      if (received === "reset") {
+        await this.restart(tx, media);
+        return "reset";
+      }
+      if (received < media.sizeBytes) return repo.setReceived(tx, id, received);
 
       if ((await this.storage.sha256(storageKey(userId, id))) !== media.sha256) {
         await this.restart(tx, media);
-        throw new ApiError(422, "checksum_mismatch", "Uploaded bytes do not match the declared SHA-256; upload again");
+        return "checksum_mismatch";
       }
-      return toInfo(await repo.markComplete(tx, id, received));
+      return repo.markComplete(tx, id, received);
     });
+    if (outcome === "reset") throw new ApiError(409, "offset_mismatch", "Upload state was reset; start again from offset 0");
+    if (outcome === "checksum_mismatch") {
+      throw new ApiError(422, "checksum_mismatch", "Uploaded bytes do not match the declared SHA-256; upload again from offset 0");
+    }
+    return toInfo(outcome);
   }
 
   async open(userId: string, id: string): Promise<{ info: MediaInfo; stream: Readable }> {
@@ -111,14 +121,13 @@ export class MediaService {
     return stale.length;
   }
 
-  private async writeChunk(tx: Queryable, media: MediaRow, offset: number, chunk: Buffer): Promise<number> {
+  /** Appends the chunk; "reset" when stored bytes and the database disagree (e.g. after a crash mid-write). */
+  private async writeChunk(media: MediaRow, offset: number, chunk: Buffer): Promise<number | "reset"> {
     try {
       return await this.storage.append(storageKey(media.userId, media.id), offset, chunk);
     } catch (err) {
-      if (!(err instanceof OffsetMismatch)) throw err;
-      // Stored bytes and the database disagree (e.g. a crash mid-write): start this upload over.
-      await this.restart(tx, media);
-      throw new ApiError(409, "offset_mismatch", "Upload state was reset; start again from offset 0");
+      if (err instanceof OffsetMismatch) return "reset";
+      throw err;
     }
   }
 

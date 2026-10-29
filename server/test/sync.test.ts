@@ -78,6 +78,19 @@ describe("sync", () => {
     expect((await pull(headers)).changes).toEqual([]);
   });
 
+  it("rejects malformed dates, including purgeAt, so server jobs can rely on them", async () => {
+    const { headers } = await signUp(ctx);
+    const item = (fields: object) => ({ mutationId: mid(), entity: "items", id: "i1", op: "upsert", baseVersion: 0, fields });
+    const r = await push(headers, [
+      item({ title: "x", state: "TRASHED", purgeAt: "soon" }),
+      item({ title: "x", capturedAt: "2026-13-45T99:00:00Z" }),
+      { mutationId: mid(), entity: "sessions", id: "s1", op: "upsert", baseVersion: 0, fields: { taskId: "t1", start: "10:00", end: "10:45" } },
+    ]);
+    expect(r.results.map((x) => x.status)).toEqual(["rejected", "rejected", "rejected"]);
+    const ok = await push(headers, [item({ title: "x", state: "TRASHED", purgeAt: "2026-11-28T09:41:00.123456Z", capturedAt: "2026-10-29T09:41:00+03:00" })]);
+    expect(ok.results[0]!.status).toBe("applied");
+  });
+
   it("rejects unknown entities and malformed batches at the API boundary", async () => {
     const { headers } = await signUp(ctx);
     const unknown = await ctx.app.inject({ method: "POST", url: "/v1/sync/push", headers, payload: { mutations: [{ ...task("x", { a: 1 }), entity: "secrets" }] } });

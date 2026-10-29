@@ -4,9 +4,10 @@ import { z } from "zod";
  * Synchronized entity types and the shape of their known fields. Documents are partial on push
  * (only changed fields are sent) and may carry extra fields from newer app versions.
  */
-const iso = z.string().max(64);
+// Timestamps are ISO-8601 instants (e.g. Kotlin Instant.toString()); server jobs parse them.
+const iso = z.iso.datetime({ offset: true });
 const shapes = {
-  items: { kind: z.string().max(16), title: z.string().max(2000), body: z.string().max(200_000), state: z.string().max(16), capturedAt: iso },
+  items: { kind: z.string().max(16), title: z.string().max(2000), body: z.string().max(200_000), state: z.string().max(16), capturedAt: iso, purgeAt: iso },
   tasks: { title: z.string().max(2000), notes: z.string().max(200_000), listId: z.string().max(128), status: z.string().max(16) },
   lists: { name: z.string().max(200) },
   sessions: { taskId: z.string().max(128), start: iso, end: iso, state: z.string().max(16) },

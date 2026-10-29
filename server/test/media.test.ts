@@ -50,6 +50,16 @@ describe("media uploads", () => {
     expect((await ctx.app.inject({ method: "GET", url: `/v1/media/${created.id}`, headers })).json().receivedBytes).toBe(0);
   });
 
+  it("commits the reset when a multi-chunk upload fails its checksum, so it can resume from 0", async () => {
+    const { headers } = await signUp(ctx);
+    const bytes = randomBytes(2000);
+    const created = (await start(headers, bytes, sha256(Buffer.from("something else")))).json();
+    expect((await chunk(headers, created.id, 0, bytes.subarray(0, 1000))).json().receivedBytes).toBe(1000);
+    expect((await chunk(headers, created.id, 1000, bytes.subarray(1000))).json().error.code).toBe("checksum_mismatch");
+    expect((await ctx.app.inject({ method: "GET", url: `/v1/media/${created.id}`, headers })).json().receivedBytes).toBe(0);
+    expect((await chunk(headers, created.id, 0, bytes.subarray(0, 1000))).json().receivedBytes).toBe(1000);
+  });
+
   it("will not download an incomplete upload", async () => {
     const { headers } = await signUp(ctx);
     const created = (await start(headers, randomBytes(10))).json();
