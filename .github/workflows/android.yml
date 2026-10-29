@@ -1,11 +1,12 @@
 name: Android
 
+# No path filters on the trigger: "Core tests" and "App build, lint and tests" are required checks,
+# so they must always report. The changes job skips them (skipped counts as passing) when nothing
+# Android-related changed.
 on:
   push:
     branches: [main, "feature/**"]
-    paths: ["android/**", ".github/workflows/android.yml", ".github/scripts/**", ".github/problem-matchers/**"]
   pull_request:
-    paths: ["android/**", ".github/workflows/android.yml", ".github/scripts/**", ".github/problem-matchers/**"]
   workflow_dispatch:
 
 permissions:
@@ -21,8 +22,41 @@ defaults:
     shell: bash
 
 jobs:
+  changes:
+    name: Detect Android changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      android: ${{ steps.diff.outputs.android }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: diff
+        working-directory: .
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          base="${PR_BASE:-$PUSH_BEFORE}"
+          android_paths='^(android/|\.github/(workflows/android\.yml|scripts/|problem-matchers/))'
+          if [[ "$EVENT" == "workflow_dispatch" || -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            changed=true
+          else
+            # --no-renames lists both sides of a move, so moving a file out of android/ still counts.
+            # The diff is captured first: piping into `grep -q` can fail the pipeline under pipefail.
+            files="$(git diff --name-only --no-renames "$base" HEAD)"
+            if grep -qE "$android_paths" <<< "$files"; then changed=true; else changed=false; fi
+          fi
+          echo "android=$changed" >> "$GITHUB_OUTPUT"
+          echo "Android-related changes: $changed"
+
   core:
     name: Core tests
+    needs: changes
+    # Fail closed: if change detection itself failed, run the suites rather than skip them.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.android == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -52,6 +86,9 @@ jobs:
 
   app:
     name: App build, lint and tests
+    needs: changes
+    # Fail closed: if change detection itself failed, run the suites rather than skip them.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.android == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
