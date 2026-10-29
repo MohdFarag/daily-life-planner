@@ -6,6 +6,7 @@
 | --- | --- |
 | `android/core` | Pure Kotlin domain rules (triage, scheduling, prayer engine). Separate Gradle build; no Android SDK needed. |
 | `android/app` | Android app (Compose UI, storage, background work). |
+| `server/` | Backend API (Node, Fastify, PostgreSQL). See `server/README.md`. |
 | `web/` | Web prototype of the Figma design. |
 
 ## Build and test
@@ -14,6 +15,10 @@
 cd android
 ./gradlew -p core test                                   # domain rules
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+```
+
+```bash
+cd server && npm ci && npm run lint && npm run typecheck && npm test   # needs PostgreSQL, see server/README.md
 ```
 
 ```bash
