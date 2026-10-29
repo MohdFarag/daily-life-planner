@@ -10,6 +10,8 @@ import app.dailylife.core.model.Attachment
 import app.dailylife.core.model.CaptureItem
 import app.dailylife.core.model.CaptureKind
 import app.dailylife.core.model.PrayerName
+import app.dailylife.core.model.PrayerPoint
+import app.dailylife.core.model.Relation
 import app.dailylife.core.model.TaskList
 import app.dailylife.core.model.TimeBlock
 import app.dailylife.core.prayer.PrayerSettings
@@ -23,6 +25,20 @@ fun kindKey(kind: CaptureKind) =
         CaptureKind.IMAGE -> "imageKind"
         CaptureKind.VIDEO -> "videoKind"
         CaptureKind.FILE -> "fileKind"
+    }
+
+fun relationKey(relation: Relation) =
+    when (relation) {
+        Relation.STARTS_AFTER -> "startsAfter"
+        Relation.STARTS_BEFORE -> "startsBefore"
+        Relation.ENDS_BEFORE -> "endsBefore"
+    }
+
+fun anchorKey(point: PrayerPoint) =
+    when (point) {
+        PrayerPoint.ADHAN -> "adhan"
+        PrayerPoint.IQAMA -> "iqama"
+        PrayerPoint.END -> "periodEnd"
     }
 
 private val PRAYER_AR =

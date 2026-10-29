@@ -7,6 +7,7 @@ import app.dailylife.android.ui.plan.PlanItemKind
 import app.dailylife.android.ui.plan.planItems
 import app.dailylife.android.ui.plan.unplannedTasks
 import app.dailylife.android.ui.plan.weekOf
+import app.dailylife.android.ui.task.taskSchedule
 import app.dailylife.android.ui.today.DayRow
 import app.dailylife.android.ui.today.buildTodayState
 import app.dailylife.core.model.CaptureItem
@@ -92,6 +93,16 @@ class StateBuildersTest {
             loaded = true,
         )
     private val planner = DayPlanner()
+    private val rule =
+        RelativeRule(
+            "r",
+            PrayerName.ASR,
+            PrayerPoint.END,
+            Relation.STARTS_AFTER,
+            10,
+            30,
+            from = today,
+        )
 
     @Test
     fun `today - progress counts each task once and up next is the first open future session`() {
@@ -146,16 +157,6 @@ class StateBuildersTest {
 
     @Test
     fun `plan - unplanned tasks exclude scheduled, completed and rule-driven tasks`() {
-        val rule =
-            RelativeRule(
-                "r",
-                PrayerName.ASR,
-                PrayerPoint.END,
-                Relation.STARTS_AFTER,
-                10,
-                30,
-                from = today,
-            )
         val withRule =
             snapshot.copy(
                 tasks = snapshot.tasks + task("ruled"),
@@ -165,5 +166,24 @@ class StateBuildersTest {
             listOf("dropped", "loose"),
             unplannedTasks(withRule, at("09:41")).map { it.id },
         )
+    }
+
+    @Test
+    fun `task schedule - lists only the task's live upcoming sessions, soonest first`() {
+        val busy =
+            snapshot.copy(
+                sessions =
+                    listOf(
+                        session("past", "next", "07:00", "07:30"),
+                        session("late", "next", "15:00", "15:30"),
+                        session("soon", "next", "10:00", "10:45"),
+                        session("off", "next", "11:00", "11:30", SessionState.CANCELED),
+                        session("other", "later", "12:00", "12:30"),
+                    ),
+                rules = listOf(RuleBinding("next", rule), RuleBinding("later", rule)),
+            )
+        val schedule = taskSchedule(busy, "next", at("09:41"))
+        assertEquals(listOf("soon", "late"), schedule.upcoming.map { it.id })
+        assertEquals(listOf("next"), schedule.rules.map { it.taskId })
     }
 }

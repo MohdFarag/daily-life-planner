@@ -4,25 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,19 +28,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.dailylife.android.data.Snapshot
 import app.dailylife.android.ui.components.AppButton
-import app.dailylife.android.ui.components.AppIconButton
+import app.dailylife.android.ui.components.AppSheet
 import app.dailylife.android.ui.components.ButtonStyle
 import app.dailylife.android.ui.components.Chip
-import app.dailylife.android.ui.components.Corner12
 import app.dailylife.android.ui.components.Corner16
 import app.dailylife.android.ui.components.Segmented
+import app.dailylife.android.ui.components.SheetHeader
 import app.dailylife.android.ui.components.card
 import app.dailylife.android.ui.components.pickDate
 import app.dailylife.android.ui.components.pickTime
+import app.dailylife.android.ui.format.anchorKey
 import app.dailylife.android.ui.format.blockLabel
 import app.dailylife.android.ui.format.dayLabel
 import app.dailylife.android.ui.format.prayerName
 import app.dailylife.android.ui.format.range
+import app.dailylife.android.ui.format.relationKey
 import app.dailylife.android.ui.i18n.LocalLang
 import app.dailylife.android.ui.i18n.num
 import app.dailylife.android.ui.i18n.tr
@@ -70,7 +65,6 @@ import java.util.UUID
  * Plan a session: fixed time, or relative to a prayer with explicit wording (REL01). Conflicts are
  * explained before saving; scheduling over them needs an explicit override (PLN02, AC11).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleSheet(vm: AppViewModel, s: Snapshot, target: ScheduleTarget) {
     val task = s.tasks.firstOrNull { it.id == target.taskId } ?: return
@@ -91,59 +85,30 @@ fun ScheduleSheet(vm: AppViewModel, s: Snapshot, target: ScheduleTarget) {
         close()
     }
 
-    ModalBottomSheet(
-        onDismissRequest = close,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = AppColors.canvas,
-        dragHandle = { DragHandle() },
-    ) {
-        Column(
-            Modifier.fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp, top = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            SheetHeader(onClose = close)
-            Text(
-                task.title + (task.estimateMin?.let { " · " + tr("minutes", it) } ?: ""),
-                style = AppType.small,
-            )
-            if (editing == null) ModeSwitch(draft.mode) { draft = draft.copy(mode = it) }
-            DateField(draft.date, minDate = vm.today()) { draft = draft.copy(date = it) }
-            when (draft.mode) {
-                ScheduleMode.FIXED -> FixedTimeFields(draft) { draft = it }
-                ScheduleMode.RELATIVE -> RelativeFields(draft) { draft = it }
-            }
-            result.slot?.let { SlotPreview(it, draft, result.check, s.prayer.zone) }
-            result.check?.let { Availability(it, s) }
-            Suggestions(result.suggestions, s.prayer.zone) {
-                draft = draft.copy(start = it.start.atZone(s.prayer.zone).toLocalTime())
-            }
-            Actions(
-                fits = result.check?.ok ?: true,
-                canSave = result.slot != null,
-                onSave = ::save,
-                onCancel = close,
-            )
-            Text(tr("multiSession"), style = AppType.micro)
+    AppSheet(onDismiss = close) {
+        SheetHeader(tr("planSession"), onClose = close)
+        Text(
+            task.title + (task.estimateMin?.let { " · " + tr("minutes", it) } ?: ""),
+            style = AppType.small,
+        )
+        if (editing == null) ModeSwitch(draft.mode) { draft = draft.copy(mode = it) }
+        DateField(draft.date, minDate = vm.today()) { draft = draft.copy(date = it) }
+        when (draft.mode) {
+            ScheduleMode.FIXED -> FixedTimeFields(draft) { draft = it }
+            ScheduleMode.RELATIVE -> RelativeFields(draft) { draft = it }
         }
-    }
-}
-
-@Composable
-private fun DragHandle() {
-    Box(Modifier.padding(top = 12.dp).size(40.dp, 4.dp).clip(Corner12).background(AppColors.border))
-}
-
-@Composable
-private fun SheetHeader(onClose: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(tr("planSession"), style = AppType.h2)
-        AppIconButton(Icons.Outlined.Close, tr("close"), onClose)
+        result.slot?.let { SlotPreview(it, draft, result.check, s.prayer.zone) }
+        result.check?.let { Availability(it, s) }
+        Suggestions(result.suggestions, s.prayer.zone) {
+            draft = draft.copy(start = it.start.atZone(s.prayer.zone).toLocalTime())
+        }
+        Actions(
+            fits = result.check?.ok ?: true,
+            canSave = result.slot != null,
+            onSave = ::save,
+            onCancel = close,
+        )
+        Text(tr("multiSession"), style = AppType.micro)
     }
 }
 
@@ -206,21 +171,13 @@ private fun RelativeFields(draft: ScheduleDraft, onChange: (ScheduleDraft) -> Un
         }
     }
     Segmented(
-        listOf(
-            Relation.STARTS_AFTER.name to tr("startsAfter"),
-            Relation.STARTS_BEFORE.name to tr("startsBefore"),
-            Relation.ENDS_BEFORE.name to tr("endsBefore"),
-        ),
+        Relation.entries.map { it.name to tr(relationKey(it)) },
         draft.relation.name,
         { onChange(draft.copy(relation = Relation.valueOf(it))) },
         Modifier.fillMaxWidth(),
     )
     Segmented(
-        listOf(
-            PrayerPoint.ADHAN.name to tr("adhan"),
-            PrayerPoint.IQAMA.name to tr("iqama"),
-            PrayerPoint.END.name to tr("periodEnd"),
-        ),
+        PrayerPoint.entries.map { it.name to tr(anchorKey(it)) },
         draft.anchor.name,
         { onChange(draft.copy(anchor = PrayerPoint.valueOf(it))) },
         Modifier.fillMaxWidth(),

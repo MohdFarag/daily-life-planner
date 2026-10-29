@@ -10,32 +10,24 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Checklist
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material.icons.outlined.Videocam
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -50,10 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import app.dailylife.android.domain.CaptureInput
 import app.dailylife.android.ui.components.AppButton
-import app.dailylife.android.ui.components.AppIconButton
+import app.dailylife.android.ui.components.AppSheet
 import app.dailylife.android.ui.components.ButtonStyle
 import app.dailylife.android.ui.components.Corner12
 import app.dailylife.android.ui.components.Corner16
+import app.dailylife.android.ui.components.SheetHeader
 import app.dailylife.android.ui.components.card
 import app.dailylife.android.ui.format.attachmentLabel
 import app.dailylife.android.ui.format.clock
@@ -65,7 +58,6 @@ import app.dailylife.android.viewmodel.AppViewModel
 import kotlinx.coroutines.delay
 
 /** Quick capture (CAP01–CAP03): text, list, voice, photo, video or files, saved to the inbox. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaptureSheet(vm: AppViewModel) {
     val state = rememberCaptureSheetState(vm.mediaDir)
@@ -88,60 +80,28 @@ fun CaptureSheet(vm: AppViewModel) {
         vm.captureOpen = false
     }
 
-    ModalBottomSheet(
-        onDismissRequest = ::close,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = AppColors.canvas,
-        dragHandle = {
-            Box(
-                Modifier.padding(top = 12.dp)
-                    .size(40.dp, 4.dp)
-                    .clip(Corner12)
-                    .background(AppColors.border)
-            )
-        },
-    ) {
-        Column(
-            Modifier.fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp, top = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+    AppSheet(onDismiss = ::close) {
+        SheetHeader(tr("captureSomething"), onClose = ::close)
+        Text(tr("captureSubtitle"), style = AppType.small)
+        ModePicker(state.mode) { state.mode = it }
+        ModeAction(state)
+        Status(state, vm.lang)
+        TextArea(state)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Header(onClose = ::close)
-            ModePicker(state.mode) { state.mode = it }
-            ModeAction(state)
-            Status(state, vm.lang)
-            TextArea(state)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    Icons.Outlined.CloudDone,
-                    null,
-                    tint = AppColors.secondary,
-                    modifier = Modifier.size(18.dp),
-                )
-                Text(tr("worksOffline"), style = AppType.micro)
-            }
-            AppButton(tr("saveToInbox"), ::save, enabled = state.canSave)
-            Text(tr("captureFooter"), style = AppType.micro)
+            Icon(
+                Icons.Outlined.CloudDone,
+                null,
+                tint = AppColors.secondary,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(tr("worksOffline"), style = AppType.micro)
         }
+        AppButton(tr("saveToInbox"), ::save, enabled = state.canSave)
+        Text(tr("captureFooter"), style = AppType.micro)
     }
-}
-
-@Composable
-private fun Header(onClose: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(tr("captureSomething"), style = AppType.h2)
-        AppIconButton(Icons.Outlined.Close, tr("close"), onClose)
-    }
-    Text(tr("captureSubtitle"), style = AppType.small)
 }
 
 @Composable
