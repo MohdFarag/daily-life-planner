@@ -1,5 +1,11 @@
 // Illustrative prayer times, each protected for 30 minutes.
-export const PRAYERS = [
+export interface Prayer {
+  key: string;
+  /** Adhan time, "HH:MM". */
+  start: string;
+}
+
+export const PRAYERS: Prayer[] = [
   { key: "fajr", start: "05:12" },
   { key: "dhuhr", start: "12:10" },
   { key: "asr", start: "15:21" },

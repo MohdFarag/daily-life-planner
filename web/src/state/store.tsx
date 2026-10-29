@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { deleteBlob } from "../lib/blobs";
 import { downloadJson } from "../lib/download";
 import { uid } from "../lib/ids";
@@ -29,19 +29,33 @@ function useStoreValue() {
 
   useEffect(() => saveData(data), [data]);
 
-  const update = (fn: (d: Data) => Data) => setData(fn);
+  const update = setData;
 
-  const addTask = (task: Omit<Task, "id">) => {
-    const id = uid();
-    update((d) => ({ ...d, tasks: [...d.tasks, { ...task, id }] }));
-    return id;
-  };
-
-  const addItem = (item: Omit<InboxItem, "id" | "createdAt" | "status" | "pendingSync">) =>
-    update((d) => ({
-      ...d,
-      inbox: [{ ...item, id: uid(), createdAt: Date.now(), status: "inbox", pendingSync: !navigator.onLine }, ...d.inbox],
-    }));
+  // Actions that only transform the data; created once so their identity is stable across renders.
+  const actions = useMemo(
+    () => ({
+      patchTask: (id: string, patch: Partial<Task>) => setData(m.patchTask(id, patch)),
+      patchItem: (id: string, patch: Partial<InboxItem>) => setData(m.patchItem(id, patch)),
+      toggleDone: (id: string) => setData(m.toggleDone(id)),
+      deleteTask: (id: string) => setData(m.deleteTask(id)),
+      addTask: (task: Omit<Task, "id">) => {
+        const id = uid();
+        setData((d) => ({ ...d, tasks: [...d.tasks, { ...task, id }] }));
+        return id;
+      },
+      addItem: (item: Omit<InboxItem, "id" | "createdAt" | "status" | "pendingSync">) =>
+        setData((d) => ({
+          ...d,
+          inbox: [{ ...item, id: uid(), createdAt: Date.now(), status: "inbox", pendingSync: !navigator.onLine }, ...d.inbox],
+        })),
+      startFocus: (taskId: string) => setData(m.startFocus(taskId)),
+      pauseFocus: () => setData(m.pauseFocus),
+      resumeFocus: () => setData(m.resumeFocus),
+      extendFocus: (sec: number) => setData(m.extendFocus(sec)),
+      endFocus: () => setData(m.endFocus),
+    }),
+    [],
+  );
 
   const deleteItem = (id: string) => {
     const item = data.inbox.find((i) => i.id === id);
@@ -83,17 +97,7 @@ function useStoreValue() {
     ...nav,
     captureOpen, setCaptureOpen, scheduleTaskId, setScheduleTaskId,
     ...toasts, online,
-    patchTask: (id: string, patch: Partial<Task>) => update(m.patchTask(id, patch)),
-    patchItem: (id: string, patch: Partial<InboxItem>) => update(m.patchItem(id, patch)),
-    toggleDone: (id: string) => update(m.toggleDone(id)),
-    deleteTask: (id: string) => update(m.deleteTask(id)),
-    addTask, addItem, deleteItem,
-    startFocus: (taskId: string) => update(m.startFocus(taskId)),
-    pauseFocus: () => update(m.pauseFocus),
-    resumeFocus: () => update(m.resumeFocus),
-    extendFocus: (sec: number) => update(m.extendFocus(sec)),
-    endFocus: () => update(m.endFocus),
-    remaining: m.remaining,
+    ...actions, deleteItem, remaining: m.remaining,
     triage, undoTriage, canUndo: () => lastTriage.current !== null,
     busyOn, todaysTasks,
     freeMinutesToday: () => freeMinutes(busyOn(today)),

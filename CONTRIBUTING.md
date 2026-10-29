@@ -25,7 +25,7 @@ cd server && npm ci && npm run lint && npm run typecheck && npm test   # needs P
 ```
 
 ```bash
-cd web && npm ci && npm run build
+cd web && npm ci && npm test && npm run build
 ```
 
 Dependency versions live in `android/gradle/libs.versions.toml`; Dependabot proposes updates weekly.

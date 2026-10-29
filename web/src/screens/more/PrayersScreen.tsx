@@ -1,7 +1,6 @@
 import { Moon } from "lucide-react";
 import { ICON_STROKE, SubScreen, Toggle } from "../../components";
-import { fromMin, toMin } from "../../lib/time";
-import { PRAYER_MIN, PRAYERS, useStore } from "../../state";
+import { PRAYERS, prayerWindow, timeRange, useStore } from "../../state";
 
 export function PrayersScreen() {
   const s = useStore();
@@ -19,7 +18,7 @@ export function PrayersScreen() {
           <div key={p.key} className="prayer-row">
             <Moon size={24} strokeWidth={ICON_STROKE} />
             <span className="t-label" style={{ flex: 1 }}>{s.prayerName(p.key)}</span>
-            <span className="t-micro c-secondary">{s.n(`${p.start}–${fromMin(toMin(p.start) + PRAYER_MIN)}`)}</span>
+            <span className="t-micro c-secondary">{s.n(timeRange(prayerWindow(p).start, prayerWindow(p).end))}</span>
           </div>
         ))}
       </div>

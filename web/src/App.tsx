@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { BottomNav, StatusBar } from "./components";
-import { CaptureSheet } from "./screens/CaptureSheet";
-import { Focus } from "./screens/Focus";
-import { Inbox } from "./screens/Inbox";
+import { CaptureSheet } from "./screens/capture/CaptureSheet";
+import { Focus } from "./screens/focus/Focus";
+import { Inbox } from "./screens/inbox/Inbox";
 import { CollectionsScreen } from "./screens/more/CollectionsScreen";
 import { GoogleScreen } from "./screens/more/GoogleScreen";
 import { More } from "./screens/more/More";
@@ -11,11 +11,11 @@ import { PrefsScreen } from "./screens/more/PrefsScreen";
 import { SearchScreen } from "./screens/more/SearchScreen";
 import { TasksScreen } from "./screens/more/TasksScreen";
 import { TrashScreen } from "./screens/more/TrashScreen";
-import { Plan } from "./screens/Plan";
-import { Process } from "./screens/Process";
-import { ScheduleSheet } from "./screens/ScheduleSheet";
-import { TaskDetail } from "./screens/TaskDetail";
-import { Today } from "./screens/Today";
+import { Plan } from "./screens/plan/Plan";
+import { Process } from "./screens/process/Process";
+import { ScheduleSheet } from "./screens/schedule/ScheduleSheet";
+import { TaskDetail } from "./screens/task/TaskDetail";
+import { Today } from "./screens/today/Today";
 import { type Tab, useStore } from "./state";
 
 const TABS: Tab[] = ["today", "inbox", "plan", "more"];

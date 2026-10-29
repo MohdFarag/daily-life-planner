@@ -1,9 +1,9 @@
 import { CloudCheck, CloudOff, Inbox as InboxIcon } from "lucide-react";
 import { useState } from "react";
-import { Button, Empty, Fab, ICON_STROKE, KIND_ICON, PageHeading } from "../components";
-import { itemSubtitle, useKindLabel, useRelativeTime } from "../hooks/useItemLabels";
-import { formatClock } from "../lib/time";
-import { type InboxItem, useStore } from "../state";
+import { Button, Empty, Fab, ICON_STROKE, KIND_ICON, PageHeading } from "../../components";
+import { itemSubtitle, useKindLabel, useRelativeTime } from "../../hooks/useItemLabels";
+import { formatClock } from "../../lib/time";
+import { type InboxItem, inboxQueue, isLink, useStore } from "../../state";
 
 type Filter = "all" | "notes" | "links";
 
@@ -12,9 +12,9 @@ export function Inbox() {
   const [filter, setFilter] = useState<Filter>("all");
   const kindLabel = useKindLabel();
   const rel = useRelativeTime();
-  const items = s.data.inbox.filter((i) => i.status === "inbox");
-  const links = items.filter((i) => i.kind === "link");
-  const notes = items.filter((i) => i.kind !== "link");
+  const items = inboxQueue(s.data);
+  const links = items.filter(isLink);
+  const notes = items.filter((i) => !isLink(i));
   const visible = filter === "all" ? items : filter === "links" ? links : notes;
   const pending = items.filter((i) => i.pendingSync).length;
 
@@ -48,7 +48,11 @@ export function Inbox() {
 
         <div className="stack-12">
           {visible.map((item) => (
-            <InboxCard key={item.id} item={item} subtitle={itemSubtitle(item, kindLabel(item.kind), rel(item.createdAt), (app) => s.t("sharedFrom", { app }))} />
+            <InboxCard
+              key={item.id}
+              item={item}
+              subtitle={itemSubtitle(item, kindLabel(item.kind), rel(item.createdAt), (app) => s.t("sharedFrom", { app }))}
+            />
           ))}
           {!items.length && <Empty icon={InboxIcon} title={s.t("inboxEmpty")} hint={s.t("inboxEmptyHint")} />}
         </div>

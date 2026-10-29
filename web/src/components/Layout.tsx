@@ -61,3 +61,18 @@ export function Empty({ icon: Icon, title, hint }: { icon: LucideIcon; title: st
     </div>
   );
 }
+
+/** A full screen shown when what it was opened for no longer exists. */
+export function MissingScreen({ icon, title }: { icon: LucideIcon; title: string }) {
+  const s = useStore();
+  return (
+    <div className="screen">
+      <div className="content no-fab">
+        <div className="top-bar">
+          <IconButton icon={BackIcon} label={s.t("back")} onClick={s.back} flip />
+        </div>
+        <Empty icon={icon} title={title} />
+      </div>
+    </div>
+  );
+}

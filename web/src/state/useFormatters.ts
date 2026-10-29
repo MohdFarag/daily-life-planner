@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import { dictionaries, localizeDigits, translate, type Lang, type StringKey } from "../i18n";
-import { formatDuration } from "../lib/time";
+import { dictionaries, locale, localizeDigits, translate, type Lang, type StringKey } from "../i18n";
+import { formatDuration, parseISO, todayISO } from "../lib/time";
 import type { CalendarEvent, ListName, Task } from "./types";
 
 /** Language-aware text helpers for the current [lang]. */
@@ -25,5 +25,9 @@ export function useFormatters(lang: Lang) {
   const eventTitle = (event: CalendarEvent) => (lang === "ar" && event.titleAr) || event.title;
   const listName = (l: ListName) => t(l === "Work" ? "work" : "personal");
   const prayerName = (key: string) => dictionaries[lang].prayerNames[key];
-  return { t, n, dur, taskTitle, taskNotes, eventTitle, listName, prayerName };
+  /** Formats an ISO date ("2026-10-29") in the current language. */
+  const date = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale(lang), opts).format(parseISO(iso));
+  /** "Today", or a short date such as "Thu 29 Oct". */
+  const dayLabel = (iso: string) => (iso === todayISO() ? t("today") : date(iso, { weekday: "short", day: "numeric", month: "short" }));
+  return { t, n, dur, taskTitle, taskNotes, eventTitle, listName, prayerName, date, dayLabel };
 }
