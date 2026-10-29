@@ -1,0 +1,53 @@
+name: PR hygiene
+
+# Squash merging uses the PR title as the commit on main, so the title must follow Conventional
+# Commits; release-please reads those commits to pick the next version and write the changelog.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  conventions:
+    name: Title and branch name
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Check PR title (Conventional Commits)
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([a-z0-9-]+\))?!?: [^ ].{2,}$'
+          if [[ ! "$TITLE" =~ $pattern ]]; then
+            echo "::error::PR title must look like 'feat(android): add sign-in' (type(scope): summary). Got: $TITLE"
+            exit 1
+          fi
+      - name: Check branch name
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          pattern='^((feat|feature|fix|refactor|docs|test|build|ci|chore|perf)/[a-z0-9._-]+|dependabot/.+|release-please--.+)$'
+          if [[ ! "$BRANCH" =~ $pattern ]]; then
+            echo "::error::Branch '$BRANCH' should be named <type>/<short-topic>, e.g. feat/sign-in (see CONTRIBUTING.md)."
+            exit 1
+          fi
+
+  label:
+    name: Label by area
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    # Dependabot PRs get a read-only token, so they keep the labels Dependabot sets.
+    if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+        with:
+          sync-labels: true
