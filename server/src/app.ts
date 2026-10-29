@@ -33,7 +33,7 @@ export function createServices({ config, db, storage }: Pick<AppDeps, "config" |
   const auth = new AuthService(db, config);
   const sync = new SyncService(db);
   const media = new MediaService(db, storage ?? new LocalDiskStorage(config.MEDIA_DIR), config);
-  const account = new AccountService(db, auth, media);
+  const account = new AccountService(db, auth, sync, media);
   return { auth, sync, media, account };
 }
 

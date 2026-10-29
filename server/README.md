@@ -39,12 +39,14 @@ src/
     *.schemas.ts           Zod request/response contracts (also feed the OpenAPI docs)
     *.service.ts           business rules and transaction boundaries; no HTTP, no SQL strings
     *.repository.ts        SQL only; maps rows to typed objects
-  jobs/retention.ts        periodic trash purge and housekeeping
+  modules/users/           the users table, shared by auth, media (quota lock) and account deletion
+  jobs/retention.ts        periodic trash purge and housekeeping, run through the owning services
 migrations/                plain SQL, applied in order at startup
 ```
 
 The layering is enforced by ESLint: services, repositories and shared code cannot import the HTTP
-framework or layer, and repositories cannot import services.
+framework or layer; repositories cannot import services; a service uses only its own module's
+repository (plus `users`) and reaches other modules through their services; jobs never run SQL.
 
 ## API (v1)
 

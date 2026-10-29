@@ -1,7 +1,8 @@
 import type { Config } from "../../shared/config.js";
 import { type Db, type Queryable, withTx } from "../../shared/db.js";
 import { ApiError, conflict, unauthorized } from "../../shared/errors.js";
-import { authRepository as repo, type TokenHashes, type UserRow } from "./auth.repository.js";
+import { type UserRow, usersRepository as users } from "../users/users.repository.js";
+import { authRepository as repo, type TokenHashes } from "./auth.repository.js";
 import { hashPassword, verifyPassword } from "./passwords.js";
 import { digest, newToken } from "./tokens.js";
 
@@ -55,8 +56,8 @@ export class AuthService {
     const passwordHash = await hashPassword(input.password);
     try {
       return await withTx(this.db, async (tx) => {
-        if (await repo.findUserByEmail(tx, input.email)) throw this.emailTaken();
-        const user = await repo.insertUser(tx, {
+        if (await users.findByEmail(tx, input.email)) throw this.emailTaken();
+        const user = await users.insert(tx, {
           email: input.email, passwordHash, displayName: input.displayName ?? null, locale: input.locale,
         });
         const tokens = await this.startSession(tx, user.id, input.deviceName);
@@ -70,7 +71,7 @@ export class AuthService {
   }
 
   async login(input: { email: string; password: string; deviceName?: string }) {
-    const user = await repo.findUserByEmail(this.db, input.email);
+    const user = await users.findByEmail(this.db, input.email);
     const valid = user
       ? await verifyPassword(input.password, user.passwordHash)
       : await verifyPassword(input.password, await (this.dummyHash ??= hashPassword("unused"))).then(() => false);
@@ -126,13 +127,18 @@ export class AuthService {
   }
 
   async me(principal: Principal): Promise<PublicUser> {
-    const user = await repo.findUserById(this.db, principal.userId);
+    const user = await users.findById(this.db, principal.userId);
     if (!user) throw unauthorized();
     return toPublicUser(user);
   }
 
+  /** Housekeeping: removes sessions that can no longer be used. */
+  async deleteExpiredSessions(): Promise<number> {
+    return repo.deleteExpiredSessions(this.db);
+  }
+
   async verifyCurrentPassword(principal: Principal, password: string): Promise<void> {
-    const user = await repo.findUserById(this.db, principal.userId);
+    const user = await users.findById(this.db, principal.userId);
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
       throw new ApiError(403, "wrong_password", "Password is incorrect");
     }

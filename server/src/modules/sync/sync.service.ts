@@ -40,6 +40,20 @@ interface Applied {
   usedVersion: boolean;
 }
 
+export interface PurgedItem {
+  userId: string;
+  itemId: string;
+  mediaIds: string[];
+}
+
+/** Media ids referenced by an inbox item's attachments (attachments[].mediaId). */
+function attachmentMediaIds(doc: Record<string, unknown>): string[] {
+  const attachments: unknown[] = Array.isArray(doc.attachments) ? doc.attachments : [];
+  return attachments
+    .map((a) => (a !== null && typeof a === "object" ? (a as Record<string, unknown>).mediaId : undefined))
+    .filter((id): id is string => typeof id === "string");
+}
+
 const toChange = (r: RecordRow): Change => ({ entity: r.entity, id: r.id, version: r.version, deleted: r.deleted, doc: r.doc });
 
 /**
@@ -75,6 +89,35 @@ export class SyncService {
     const rows = await repo.changesSince(this.db, userId, since, limit + 1);
     const changes = rows.slice(0, limit).map(toChange);
     return { changes, cursor: changes.at(-1)?.version ?? since, hasMore: rows.length > limit };
+  }
+
+  /** Every record that has not been deleted, for export (SEC02). */
+  async liveRecords(userId: string): Promise<Change[]> {
+    return (await repo.liveRecords(this.db, userId)).map(toChange);
+  }
+
+  /**
+   * Turns inbox items whose trash retention has passed into tombstones (DEL01, DEL03), in batches.
+   * Returns, per purged item, the media ids its attachments referenced, so they can be deleted too.
+   */
+  async purgeExpiredTrash(now: Date, batchSize = 500): Promise<PurgedItem[]> {
+    const purged: PurgedItem[] = [];
+    for (;;) {
+      const due = await repo.trashedItemsDue(this.db, now, batchSize);
+      for (const item of due) {
+        await withTx(this.db, async (tx) => {
+          const version = await repo.nextVersion(tx, item.userId);
+          await repo.writeTombstone(tx, item.userId, "items", item.id, version);
+        });
+        purged.push({ userId: item.userId, itemId: item.id, mediaIds: attachmentMediaIds(item.doc) });
+      }
+      if (due.length < batchSize) return purged;
+    }
+  }
+
+  /** Forgets idempotency results older than [days]; clients do not retry that long. */
+  async trimMutationLog(days: number): Promise<number> {
+    return repo.deleteOldMutations(this.db, days);
   }
 
   private async apply(tx: Tx, userId: string, m: Mutation, next: number): Promise<Applied> {

@@ -21,7 +21,7 @@ describe("retention job", () => {
     });
     await ctx.app.inject({ method: "POST", url: "/v1/sync/push", headers, payload: { mutations: [item("expired", "2026-10-01T00:00:00Z"), item("recent", "2099-01-01T00:00:00Z")] } });
 
-    const job = new RetentionJob(ctx.db, ctx.services.media, ctx.app.log);
+    const job = new RetentionJob(ctx.services.sync, ctx.services.auth, ctx.services.media, ctx.app.log);
     const report = await job.run(new Date("2026-10-29T00:00:00Z"));
     expect(report.purgedItems).toBe(1);
 

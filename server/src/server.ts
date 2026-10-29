@@ -10,7 +10,7 @@ const db = createPool(config.DATABASE_URL);
 await migrate(db);
 
 const { app, services } = await buildApp({ config, db });
-const retention = new RetentionJob(db, services.media, app.log.child({ job: "retention" }));
+const retention = new RetentionJob(services.sync, services.auth, services.media, app.log.child({ job: "retention" }));
 const timer = setInterval(() => {
   retention.run().catch((err: unknown) => {
     app.log.error({ err }, "retention job failed");

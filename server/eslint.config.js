@@ -40,6 +40,29 @@ export default defineConfig(
     },
   },
   {
+    // Module boundaries: a service reaches its own repository (./x.repository.js) and the shared
+    // users table; other modules' data goes through their services.
+    files: ["src/modules/**/*.service.ts"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [
+        { group: httpFrameworks, message: "Services must not depend on the HTTP framework." },
+        { group: ["**/http/**"], message: "Services must not depend on the HTTP layer." },
+        { group: ["../*/*.repository.js", "!../users/users.repository.js"],
+          message: "Use the owning module's service instead of its repository." },
+      ] }],
+    },
+  },
+  {
+    // Background jobs orchestrate services; they never touch SQL directly.
+    files: ["src/jobs/**"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [
+        { group: ["**/*.repository.js"], message: "Jobs must go through services, not repositories." },
+        { group: ["**/shared/db.js"], message: "Jobs must not run SQL." },
+      ] }],
+    },
+  },
+  {
     // Fastify route plugins are async by contract even when they only register routes.
     files: ["src/**/*.routes.ts", "src/http/health.ts"],
     rules: { "@typescript-eslint/require-await": "off" },

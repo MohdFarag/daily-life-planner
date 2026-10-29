@@ -2,7 +2,7 @@ import type { Readable } from "node:stream";
 import type { Config } from "../../shared/config.js";
 import { type Db, type Queryable, withTx } from "../../shared/db.js";
 import { ApiError, conflict, notFound } from "../../shared/errors.js";
-import { authRepository } from "../auth/auth.repository.js";
+import { usersRepository } from "../users/users.repository.js";
 import { type MediaRow, mediaRepository as repo } from "./media.repository.js";
 import { type MediaStorage, OffsetMismatch } from "./storage.js";
 
@@ -43,7 +43,7 @@ export class MediaService {
       throw new ApiError(413, "file_too_large", `Files are limited to ${this.config.MAX_FILE_BYTES} bytes`);
     }
     return withTx(this.db, async (tx) => {
-      await authRepository.lockUser(tx, userId); // two concurrent uploads must not both pass the quota check
+      await usersRepository.lock(tx, userId); // two concurrent uploads must not both pass the quota check
       const used = await repo.usedBytes(tx, userId);
       if (used + upload.sizeBytes > this.config.USER_QUOTA_BYTES) throw new ApiError(413, "quota_exceeded", "Storage quota exceeded");
       const row = await repo.insert(tx, {
