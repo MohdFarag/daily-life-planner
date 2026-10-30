@@ -48,6 +48,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val focus = FocusController(ctx)
     val tasks = TaskController(ctx, focus)
     val settings = SettingsController(ctx)
+    val account = AccountController(ctx)
 
     init {
         viewModelScope.launch {

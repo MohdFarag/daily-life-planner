@@ -3,6 +3,7 @@ package app.dailylife.android.ui.search
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,6 +18,7 @@ import app.dailylife.android.ui.components.TopBar
 import app.dailylife.android.ui.format.listName
 import app.dailylife.android.ui.i18n.tr
 import app.dailylife.android.ui.inbox.InboxCard
+import app.dailylife.android.ui.inbox.syncBadge
 import app.dailylife.android.viewmodel.AppViewModel
 import app.dailylife.core.model.CaptureState
 import app.dailylife.core.model.TaskStatus
@@ -61,8 +63,9 @@ fun SearchScreen(vm: AppViewModel, s: Snapshot) {
                 { vm.navigator.open(Screen.TaskDetail(t.id)) },
             )
         }
+        val signedIn = vm.account.account.collectAsState().value != null
         items.forEach { i ->
-            InboxCard(i, vm.lang) {
+            InboxCard(i, vm.lang, syncBadge(i, s.outbox, signedIn)) {
                 if (i.state == CaptureState.INBOX || i.state == CaptureState.DOING_NOW)
                     vm.navigator.open(Screen.Process(i.id))
                 else vm.navigator.open(Screen.Collections)

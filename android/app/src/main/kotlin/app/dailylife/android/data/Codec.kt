@@ -90,6 +90,7 @@ object Codec {
                             .put("durationMs", it.durationMs)
                             .put("uploadState", it.uploadState.name)
                             .put("name", it.name)
+                            .put("mediaId", it.mediaId)
                     }
                 ),
             )
@@ -143,12 +144,14 @@ object Codec {
                 o.optJSONArray("attachments").map {
                     Attachment(
                         it.getString("id"),
-                        it.getString("localPath"),
+                        // Absent on records from another device until the file is downloaded.
+                        it.optString("localPath", ""),
                         it.getString("mimeType"),
                         it.getLong("sizeBytes"),
                         it.longOrNull("durationMs"),
                         UploadState.valueOf(it.getString("uploadState")),
                         it.str("name"),
+                        it.str("mediaId"),
                     )
                 },
             entries =

@@ -9,6 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudDone
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +36,7 @@ import app.dailylife.core.model.CaptureItem
 import app.dailylife.core.model.CaptureKind
 
 @Composable
-fun InboxCard(item: CaptureItem, lang: String, onClick: () -> Unit) {
+fun InboxCard(item: CaptureItem, lang: String, badge: SyncBadge, onClick: () -> Unit) {
     val origin = sourceLabel(item.source.service)
     val subtitle =
         (if (origin != null) tr("sharedFrom", origin) else tr(kindKey(item.kind))) +
@@ -66,5 +71,28 @@ fun InboxCard(item: CaptureItem, lang: String, onClick: () -> Unit) {
             if (detail.isNotBlank())
                 Text(detail, style = AppType.small, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+        // Synced and device-only items need no mark; the footer explains device-only.
+        if (badge == SyncBadge.PENDING || badge == SyncBadge.NEEDS_ATTENTION) SyncIcon(badge)
     }
 }
+
+/** A small icon for a sync state, with a spoken description. */
+@Composable
+fun SyncIcon(badge: SyncBadge, modifier: Modifier = Modifier.size(18.dp)) {
+    val (icon, color) =
+        when (badge) {
+            SyncBadge.LOCAL_ONLY -> Icons.Outlined.PhoneAndroid to AppColors.secondary
+            SyncBadge.PENDING -> Icons.Outlined.CloudUpload to AppColors.secondary
+            SyncBadge.SYNCED -> Icons.Outlined.CloudDone to AppColors.primary
+            SyncBadge.NEEDS_ATTENTION -> Icons.Outlined.ErrorOutline to AppColors.warningText
+        }
+    Icon(icon, tr(syncKey(badge)), tint = color, modifier = modifier)
+}
+
+fun syncKey(badge: SyncBadge) =
+    when (badge) {
+        SyncBadge.LOCAL_ONLY -> "localOnly"
+        SyncBadge.PENDING -> "pendingSync"
+        SyncBadge.SYNCED -> "allSynced"
+        SyncBadge.NEEDS_ATTENTION -> "needsAttention"
+    }

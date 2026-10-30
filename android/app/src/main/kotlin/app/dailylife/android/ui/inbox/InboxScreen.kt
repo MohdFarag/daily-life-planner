@@ -1,6 +1,7 @@
 package app.dailylife.android.ui.inbox
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,12 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Inbox
-import androidx.compose.material.icons.outlined.PhoneAndroid
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,7 +38,6 @@ import app.dailylife.android.ui.theme.AppType
 import app.dailylife.android.viewmodel.AppViewModel
 import app.dailylife.core.inbox.Triage
 import app.dailylife.core.model.CaptureKind
-import app.dailylife.core.model.UploadState
 
 @Composable
 fun InboxScreen(vm: AppViewModel, s: Snapshot) {
@@ -54,8 +52,8 @@ fun InboxScreen(vm: AppViewModel, s: Snapshot) {
             "links" to items.filter { it.kind == CaptureKind.LINK },
             "media" to items.filter { it.kind in media },
         )
-    val pendingUploads =
-        items.flatMap { it.attachments }.count { it.uploadState != UploadState.UPLOADED }
+    val signedIn = vm.account.account.collectAsState().value != null
+    val summary = inboxSyncSummary(items, s.outbox, signedIn)
 
     ScreenColumn {
         PageHeading(tr("inbox"), tr("inboxSubtitle", items.size)) {
@@ -73,26 +71,36 @@ fun InboxScreen(vm: AppViewModel, s: Snapshot) {
             AppButton(tr("processInbox"), { vm.navigator.open(Screen.Process()) })
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             groups.getValue(filter).forEach {
-                InboxCard(it, s.lang) { vm.navigator.open(Screen.Process(it.id)) }
+                InboxCard(it, s.lang, syncBadge(it, s.outbox, signedIn)) {
+                    vm.navigator.open(Screen.Process(it.id))
+                }
             }
             if (items.isEmpty()) Empty(Icons.Outlined.Inbox, tr("inboxEmpty"), tr("inboxEmptyHint"))
         }
-        // Honest sync state: everything is local until the backend slice ships (SYN01).
-        Row(
-            Modifier.fillMaxWidth().clip(Corner12).background(AppColors.subtle).padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                if (pendingUploads > 0) Icons.Outlined.CloudOff else Icons.Outlined.PhoneAndroid,
-                null,
-                tint = AppColors.secondary,
-                modifier = Modifier.size(20.dp),
+        SyncFooter(summary) { vm.navigator.open(Screen.Account) }
+    }
+}
+
+/** Honest sync state for the inbox (SYN01); tapping opens the account screen. */
+@Composable
+private fun SyncFooter(summary: InboxSyncSummary, onOpen: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth()
+            .clip(Corner12)
+            .background(AppColors.subtle)
+            .clickable(onClick = onOpen)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SyncIcon(summary.badge, Modifier.size(20.dp))
+        Column {
+            Text(
+                if (summary.waiting > 0) tr("waitingToSync", summary.waiting)
+                else tr(syncKey(summary.badge)),
+                style = AppType.micro,
             )
-            Column {
-                Text(tr("localOnly"), style = AppType.micro)
-                Text(tr("savedOnDevice"), style = AppType.micro)
-            }
+            Text(tr("savedOnDevice"), style = AppType.micro)
         }
     }
 }

@@ -96,7 +96,8 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: ${{ needs.target.outputs.tag }}
-        run: ./gradlew -p core test :app:assembleRelease :app:bundleRelease --stacktrace
+          SERVER_URL: ${{ vars.API_SERVER_URL }} # pre-filled on the sign-in screen
+        run: ./gradlew -p core test :app:assembleRelease :app:bundleRelease -PserverUrl="$SERVER_URL" --stacktrace
 
       - name: Checksums
         run: |

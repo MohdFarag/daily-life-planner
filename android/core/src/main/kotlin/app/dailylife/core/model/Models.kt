@@ -57,6 +57,8 @@ data class Attachment(
      * captures.
      */
     val name: String? = null,
+    /** The server's id for the uploaded copy; set once an upload has started (CAP02). */
+    val mediaId: String? = null,
 )
 
 /** One entry of a captured list; each has its own id so it can be processed alone (CAP04). */
