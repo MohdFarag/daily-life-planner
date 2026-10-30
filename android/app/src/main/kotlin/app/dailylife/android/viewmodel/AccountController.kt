@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.dailylife.android.data.OutboxEntry
 import app.dailylife.android.sync.ApiException
+import app.dailylife.android.sync.McpToken
 import app.dailylife.android.sync.SignedOutException
 import app.dailylife.android.work.SyncWorker
 import java.io.IOException
@@ -27,6 +28,14 @@ class AccountController(private val ctx: ControllerScope) {
     var error by mutableStateOf<AccountError?>(null)
         private set
 
+    /** Assistant (MCP) tokens of the signed-in account. */
+    var assistantTokens by mutableStateOf<List<McpToken>>(emptyList())
+        private set
+
+    /** A token just created; its secret is shown once, then forgotten. */
+    var newAssistantToken by mutableStateOf<String?>(null)
+        private set
+
     fun signIn(server: String, email: String, password: String, create: Boolean) = act {
         if (create && password.length < MIN_PASSWORD) {
             error = AccountError("passwordTooShort")
@@ -47,6 +56,22 @@ class AccountController(private val ctx: ControllerScope) {
         SyncWorker.cancel(ctx.container.appContext)
         service.deleteAccount(password)
         ctx.messages.show("accountDeleted")
+    }
+
+    fun loadAssistantTokens() = act { assistantTokens = service.assistantTokens() }
+
+    fun createAssistantToken(name: String) = act {
+        newAssistantToken = service.createAssistantToken(name.trim()).second
+        assistantTokens = service.assistantTokens()
+    }
+
+    fun revokeAssistantToken(id: String) = act {
+        service.revokeAssistantToken(id)
+        assistantTokens = service.assistantTokens()
+    }
+
+    fun dismissNewToken() {
+        newAssistantToken = null
     }
 
     fun syncNow() = ctx.scope.launch { ctx.container.syncRunner.run() }

@@ -7,6 +7,20 @@ val LocalLang = compositionLocalOf { "en" }
 
 private val S: Map<String, Pair<String, String>> =
     mapOf(
+        "assistantAccess" to ("Assistant access (MCP)" to "وصول المساعد (MCP)"),
+        "assistantAccessExplain" to
+            ("Let an AI assistant read your plan and add or schedule tasks. It gets its own token, which you can revoke any time; it never sees your password or Google account." to
+                "اسمح لمساعد ذكي بقراءة خطتك وإضافة المهام وجدولتها. يحصل على رمز خاص به يمكنك إلغاؤه في أي وقت، ولا يرى كلمة مرورك أو حساب Google."),
+        "assistantName" to ("Name, e.g. Claude on laptop" to "الاسم، مثل Claude على الحاسوب"),
+        "createToken" to ("Create token" to "إنشاء رمز"),
+        "tokenShownOnce" to
+            ("Copy this token now; it won't be shown again" to
+                "انسخ هذا الرمز الآن؛ لن يظهر مرة أخرى"),
+        "mcpEndpoint" to ("Endpoint: %1" to "العنوان: %1"),
+        "copyToken" to ("Copy token" to "نسخ الرمز"),
+        "expiresOn" to ("Expires %1" to "ينتهي %1"),
+        "revoke" to ("Revoke" to "إلغاء"),
+        "account" to ("Account" to "الحساب"),
         "accountSync" to ("Account & sync" to "الحساب والمزامنة"),
         "syncIntro" to
             ("Sign in to keep your inbox, tasks and plans in sync across your devices. Everything keeps working offline." to

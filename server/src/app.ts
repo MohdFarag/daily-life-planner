@@ -12,9 +12,12 @@ import { accountRoutes } from "./modules/account/account.routes.js";
 import { AccountService } from "./modules/account/account.service.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { AuthService } from "./modules/auth/auth.service.js";
+import { mcpRoutes } from "./modules/mcp/mcp.routes.js";
+import { McpTokenService } from "./modules/mcp/mcp.service.js";
 import { mediaRoutes } from "./modules/media/media.routes.js";
 import { MediaService } from "./modules/media/media.service.js";
 import { LocalDiskStorage, type MediaStorage } from "./modules/media/storage.js";
+import { PlannerService } from "./modules/planner/planner.service.js";
 import { syncRoutes } from "./modules/sync/sync.routes.js";
 import { SyncService } from "./modules/sync/sync.service.js";
 import type { Config } from "./shared/config.js";
@@ -34,7 +37,9 @@ export function createServices({ config, db, storage }: Pick<AppDeps, "config" |
   const sync = new SyncService(db);
   const media = new MediaService(db, storage ?? new LocalDiskStorage(config.MEDIA_DIR), config);
   const account = new AccountService(db, auth, sync, media);
-  return { auth, sync, media, account };
+  const planner = new PlannerService(sync);
+  const mcpTokens = new McpTokenService(db);
+  return { auth, sync, media, account, planner, mcpTokens };
 }
 
 export type Services = ReturnType<typeof createServices>;
@@ -77,6 +82,7 @@ export async function buildApp(deps: AppDeps) {
       await v1.register(syncRoutes(services.sync));
       await v1.register(mediaRoutes(services.media));
       await v1.register(accountRoutes(services.account));
+      await v1.register(mcpRoutes(services.mcpTokens, services.planner));
     },
     { prefix: "/v1" },
   );

@@ -117,6 +117,9 @@ private fun SignedIn(vm: AppViewModel, s: Snapshot, account: Account, status: Sy
         }
     }
 
+    AssistantAccess(vm, account)
+
+    SectionLabel(tr("account"))
     AppButton(
         tr("signOut"),
         { vm.account.signOut() },
