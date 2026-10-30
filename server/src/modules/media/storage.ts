@@ -24,7 +24,10 @@ export class LocalDiskStorage implements MediaStorage {
 
   private file(key: string) {
     if (!/^[0-9a-f-]+\/[0-9a-f-]+$/.test(key)) throw new Error("Invalid storage key");
-    return path.join(this.root, key);
+    const root = path.resolve(this.root);
+    const file = path.resolve(root, key);
+    if (!file.startsWith(root + path.sep)) throw new Error("Invalid storage key");
+    return file;
   }
 
   async append(key: string, offset: number, chunk: Buffer): Promise<number> {

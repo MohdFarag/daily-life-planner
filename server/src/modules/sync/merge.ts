@@ -24,6 +24,9 @@ export interface MergeResult {
  * same field after the client's [baseVersion]; then the server value is kept and reported as a
  * conflict. Edits to different fields from different devices therefore both survive.
  */
+/** Keys that would reach Object.prototype if written by name. */
+const UNSAFE_FIELDS = new Set(["__proto__", "constructor", "prototype"]);
+
 export function mergeFields(
   stored: StoredRecord,
   incoming: Record<string, unknown>,
@@ -36,6 +39,7 @@ export function mergeFields(
   let changed = false;
 
   for (const [field, value] of Object.entries(incoming)) {
+    if (UNSAFE_FIELDS.has(field)) continue;
     if (isDeepStrictEqual(doc[field], value)) continue;
     const serverVersion = fieldVersions[field] ?? 0;
     if (serverVersion > baseVersion) {
