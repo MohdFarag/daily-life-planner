@@ -154,4 +154,25 @@ class ScreenLogicTest {
                 .toList()
         assertEquals(listOf(0, 15, 30, 45, 60, 0), fridays)
     }
+
+    @Test
+    fun `a typed place sets coordinates and zone, and rejects out-of-range values (PRY02)`() {
+        val base = snapshot.prayer
+        val ok =
+            PrayerSettingsEdits.withLocation(
+                base,
+                " ٢١٫٤٢ ".replace('٫', ','),
+                "39.82",
+                "Asia/Riyadh",
+            )!!
+        assertEquals(21.42, ok.latitude)
+        assertEquals(39.82, ok.longitude)
+        assertEquals(java.time.ZoneId.of("Asia/Riyadh"), ok.zone)
+        assertEquals("", ok.label)
+        assertEquals(base.method, ok.method)
+        assertEquals(null, PrayerSettingsEdits.withLocation(base, "91", "0", "UTC"))
+        assertEquals(null, PrayerSettingsEdits.withLocation(base, "10", "181", "UTC"))
+        assertEquals(null, PrayerSettingsEdits.withLocation(base, "10", "10", "Mars/Olympus"))
+        assertEquals(null, PrayerSettingsEdits.withLocation(base, "", "10", "UTC"))
+    }
 }

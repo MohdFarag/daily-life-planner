@@ -70,7 +70,9 @@ fun ScheduleSheet(vm: AppViewModel, s: Snapshot, target: ScheduleTarget) {
     val task = s.tasks.firstOrNull { it.id == target.taskId } ?: return
     val editing = target.editing
     var draft by remember {
-        mutableStateOf(ScheduleDraft.initial(task, editing, s, vm.today(), vm.now()))
+        mutableStateOf(
+            ScheduleDraft.initial(task, editing, s, vm.today(), vm.now(), target.proposed)
+        )
     }
     val result = evaluateSchedule(draft, task, editing, s, vm.dayPlanner, vm.now())
     val close = { vm.scheduling = null }
@@ -126,7 +128,7 @@ private fun ModeSwitch(mode: ScheduleMode, onChange: (ScheduleMode) -> Unit) {
 }
 
 @Composable
-private fun DateField(date: LocalDate, minDate: LocalDate, onPick: (LocalDate) -> Unit) {
+internal fun DateField(date: LocalDate, minDate: LocalDate, onPick: (LocalDate) -> Unit) {
     val context = LocalContext.current
     Row(
         Modifier.fillMaxWidth()
@@ -283,7 +285,7 @@ private fun Actions(fits: Boolean, canSave: Boolean, onSave: () -> Unit, onCance
 }
 
 @Composable
-private fun TimeBox(
+internal fun TimeBox(
     label: String,
     value: String,
     modifier: Modifier = Modifier,

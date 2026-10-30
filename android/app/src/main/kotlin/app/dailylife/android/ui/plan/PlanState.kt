@@ -31,6 +31,7 @@ data class PlanItem(
     val title: String? = null,
     val prayer: PrayerName? = null,
     val taskId: String? = null,
+    val eventId: String? = null,
     val done: Boolean = false,
     val needsReview: Boolean = false,
 )
@@ -45,7 +46,14 @@ fun planItems(snapshot: Snapshot, dayPlanner: DayPlanner, date: LocalDate): List
         }
     val events =
         day.events.map {
-            PlanItem("e${it.id}", PlanItemKind.EVENT, it.start, it.end, title = it.title)
+            PlanItem(
+                "e${it.id}",
+                PlanItemKind.EVENT,
+                it.start,
+                it.end,
+                title = it.title,
+                eventId = it.id,
+            )
         }
     val sessions =
         day.sessions

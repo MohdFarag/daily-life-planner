@@ -3,6 +3,7 @@ package app.dailylife.android.ui.plan
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,15 +18,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import app.dailylife.android.data.Snapshot
 import app.dailylife.android.navigation.Screen
+import app.dailylife.android.ui.components.AppButton
+import app.dailylife.android.ui.components.ButtonStyle
 import app.dailylife.android.ui.components.Chip
 import app.dailylife.android.ui.components.Corner8
 import app.dailylife.android.ui.components.PageHeading
@@ -42,9 +51,11 @@ import app.dailylife.android.ui.i18n.tr
 import app.dailylife.android.ui.theme.AppColors
 import app.dailylife.android.ui.theme.AppType
 import app.dailylife.android.viewmodel.AppViewModel
+import app.dailylife.android.viewmodel.EventTarget
 import app.dailylife.android.viewmodel.ScheduleTarget
 import app.dailylife.core.model.Task
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.TextStyle
 
 @Composable
@@ -53,6 +64,7 @@ fun PlanScreen(vm: AppViewModel, s: Snapshot) {
     var selected by rememberSaveable { mutableStateOf(today.toString()) }
     var view by rememberSaveable { mutableStateOf(PlanView.DAY.name) }
     val date = LocalDate.parse(selected)
+    val drag = remember { TaskDrag() }
     val mode = PlanView.valueOf(view)
 
     ScreenColumn {
@@ -63,9 +75,14 @@ fun PlanScreen(vm: AppViewModel, s: Snapshot) {
         PageHeading(tr("plan"), month) { vm.navigator.open(Screen.Search) }
         WeekStrip(s, weekOf(date), selected = date, today = today) { selected = it.toString() }
         ViewSwitcher(mode) { view = it.name }
+        AppButton(
+            tr("newEvent"),
+            { vm.editingEvent = EventTarget(date) },
+            style = ButtonStyle.QUIET,
+        )
 
         when (mode) {
-            PlanView.DAY -> DayTimeline(vm, s, date, planItems(s, vm.dayPlanner, date))
+            PlanView.DAY -> DayTimeline(vm, s, date, planItems(s, vm.dayPlanner, date), drag)
             PlanView.AGENDA -> Agenda(vm, s, planItems(s, vm.dayPlanner, date))
             PlanView.WEEK ->
                 weekOf(date).forEach { day ->
@@ -77,7 +94,15 @@ fun PlanScreen(vm: AppViewModel, s: Snapshot) {
         }
 
         Legend()
-        UnplannedTasks(vm, s, unplannedTasks(s, vm.now()))
+        UnplannedTasks(
+            vm,
+            s,
+            date,
+            unplannedTasks(s, vm.now()),
+            drag.takeIf { mode == PlanView.DAY },
+        ) { task, time ->
+            vm.scheduling = ScheduleTarget(task.id, proposed = date.atTime(time))
+        }
     }
 }
 
@@ -196,32 +221,67 @@ private fun Legend() {
 }
 
 @Composable
-private fun UnplannedTasks(vm: AppViewModel, s: Snapshot, tasks: List<Task>) {
+private fun UnplannedTasks(
+    vm: AppViewModel,
+    s: Snapshot,
+    date: LocalDate,
+    tasks: List<Task>,
+    drag: TaskDrag?,
+    onDrop: (Task, LocalTime) -> Unit,
+) {
     if (tasks.isEmpty()) return
+    val density = LocalDensity.current
+    val scale = TimelineScale(date, s.prayer.zone)
     Text(tr("notPlanned"), style = AppType.h3)
+    if (drag != null) Text(tr("dragToPlan"), style = AppType.micro)
     tasks.forEach { task ->
+        var origin by remember { mutableStateOf(Offset.Zero) }
+        val draggable =
+            if (drag == null) Modifier
+            else
+                Modifier.onGloballyPositioned { origin = it.positionInRoot() }
+                    .pointerInput(task.id) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = {
+                                drag.task = task
+                                drag.pointer = origin + it
+                            },
+                            onDrag = { change, amount ->
+                                change.consume()
+                                drag.pointer += amount
+                            },
+                            onDragEnd = {
+                                drag.dropTime(scale, density)?.let { onDrop(task, it) }
+                                drag.task = null
+                            },
+                            onDragCancel = { drag.task = null },
+                        )
+                    }
         val meta =
             listOfNotNull(
                     task.estimateMin?.let { "${num(it)} ${tr("min")}" },
                     listName(s, task.listId),
                 )
                 .joinToString(" · ")
-        TaskRowView(
-            task.title,
-            meta,
-            false,
-            { vm.tasks.toggleDone(task) },
-            { vm.navigator.open(Screen.TaskDetail(task.id)) },
-        ) {
-            Text(
-                tr("planSession"),
-                style = AppType.label,
-                color = AppColors.primary,
-                modifier =
-                    Modifier.clip(Corner8)
-                        .clickable { vm.scheduling = ScheduleTarget(task.id) }
-                        .padding(8.dp),
-            )
+        Box(draggable) {
+            TaskRowView(
+                task.title,
+                meta,
+                false,
+                { vm.tasks.toggleDone(task) },
+                { vm.navigator.open(Screen.TaskDetail(task.id)) },
+            ) {
+                // Also the alternative to dragging (UX02).
+                Text(
+                    tr("planSession"),
+                    style = AppType.label,
+                    color = AppColors.primary,
+                    modifier =
+                        Modifier.clip(Corner8)
+                            .clickable { vm.scheduling = ScheduleTarget(task.id) }
+                            .padding(8.dp),
+                )
+            }
         }
     }
 }

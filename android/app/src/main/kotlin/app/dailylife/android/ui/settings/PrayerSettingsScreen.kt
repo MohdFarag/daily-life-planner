@@ -12,6 +12,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,9 +23,12 @@ import androidx.compose.ui.unit.dp
 import app.dailylife.android.data.CITIES
 import app.dailylife.android.data.CityPreset
 import app.dailylife.android.data.Snapshot
+import app.dailylife.android.ui.components.AppButton
+import app.dailylife.android.ui.components.ButtonStyle
 import app.dailylife.android.ui.components.Chip
 import app.dailylife.android.ui.components.Corner12
 import app.dailylife.android.ui.components.DetailRow
+import app.dailylife.android.ui.components.Field
 import app.dailylife.android.ui.components.ScreenColumn
 import app.dailylife.android.ui.components.SectionLabel
 import app.dailylife.android.ui.components.TopBar
@@ -49,6 +56,7 @@ fun PrayerSettingsScreen(vm: AppViewModel, s: Snapshot) {
     ScreenColumn {
         TopBar(tr("prayerTimes"), { vm.navigator.back() })
         CityPicker(settings) { save(PrayerSettingsEdits.withCity(settings, it)) }
+        CustomLocation(settings, save)
         MethodPicker(settings.method) { save(settings.copy(method = it)) }
         SwitchRow(tr("asrMethod"), settings.madhab == Madhab.HANAFI) { hanafi ->
             save(settings.copy(madhab = if (hanafi) Madhab.HANAFI else Madhab.SHAFI))
@@ -84,6 +92,34 @@ private fun CityPicker(settings: PrayerSettings, onPick: (CityPreset) -> Unit) {
             )
         }
     }
+}
+
+/** Latitude, longitude and time zone for places without a preset (PRY02). */
+@Composable
+private fun CustomLocation(settings: PrayerSettings, save: (PrayerSettings) -> Unit) {
+    var open by rememberSaveable { mutableStateOf(settings.label.isEmpty()) }
+    var lat by rememberSaveable { mutableStateOf(settings.latitude.toString()) }
+    var lng by rememberSaveable { mutableStateOf(settings.longitude.toString()) }
+    var zone by rememberSaveable { mutableStateOf(settings.zone.id) }
+    var invalid by rememberSaveable { mutableStateOf(false) }
+    if (!open) {
+        Chip(tr("otherPlace"), false, { open = true })
+        return
+    }
+    SectionLabel(tr("otherPlace"))
+    Field(lat, tr("latitude")) { lat = it }
+    Field(lng, tr("longitude")) { lng = it }
+    Field(zone, tr("timeZoneHint")) { zone = it }
+    if (invalid) Text(tr("invalidLocation"), style = AppType.small, color = AppColors.warningText)
+    AppButton(
+        tr("useThisPlace"),
+        {
+            val next = PrayerSettingsEdits.withLocation(settings, lat, lng, zone)
+            invalid = next == null
+            next?.let(save)
+        },
+        style = ButtonStyle.SECONDARY,
+    )
 }
 
 @Composable

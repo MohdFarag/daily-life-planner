@@ -38,6 +38,21 @@ class RuleScheduler(private val repository: Repository, private val dayPlanner: 
         val snapshot = repository.state.value
         val sessions = snapshot.rules.flatMap { window(snapshot, it, today) }
         if (sessions.isNotEmpty()) repository.saveSessions(sessions)
+        retimeEvents(today)
+    }
+
+    /** Prayer-relative events from today on follow changed prayer times (REL01, REL03). */
+    private suspend fun retimeEvents(today: LocalDate) {
+        val snapshot = repository.state.value
+        snapshot.events.forEach { event ->
+            val rule = event.rule ?: return@forEach
+            if (rule.from.isBefore(today)) return@forEach
+            val anchors = dayPlanner.anchorsOrNull(snapshot, rule.from) ?: return@forEach
+            val slot = RelativeScheduler.resolve(rule, anchors)
+            if (slot.start != event.start || slot.end != event.end) {
+                repository.saveEvent(event.copy(start = slot.start, end = slot.end))
+            }
+        }
     }
 
     private fun window(

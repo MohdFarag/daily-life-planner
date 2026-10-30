@@ -17,12 +17,18 @@ import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 /** Which task the scheduling sheet plans, and the session being edited if any. */
-data class ScheduleTarget(val taskId: String, val editing: TaskSession? = null)
+data class ScheduleTarget(
+    val taskId: String,
+    val editing: TaskSession? = null,
+    /** A start proposed by dropping the task on the timeline (PLN02). */
+    val proposed: LocalDateTime? = null,
+)
 
 /**
  * Screen-level state shared by the whole app, and the feature controllers screens call into.
@@ -41,6 +47,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     // Sheets shown over the current screen.
     var captureOpen by mutableStateOf(false)
     var scheduling by mutableStateOf<ScheduleTarget?>(null)
+    var editingEvent by mutableStateOf<EventTarget?>(null)
 
     private val ctx = ControllerScope(viewModelScope, container, navigator, messages, clock)
     val capture = CaptureController(ctx)
@@ -50,6 +57,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val settings = SettingsController(ctx)
     val account = AccountController(ctx)
     val google = GoogleController(ctx)
+    val events = EventController(ctx)
 
     init {
         viewModelScope.launch {

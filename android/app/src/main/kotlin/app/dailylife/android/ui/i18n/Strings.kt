@@ -7,6 +7,43 @@ val LocalLang = compositionLocalOf { "en" }
 
 private val S: Map<String, Pair<String, String>> =
     mapOf(
+        "otherPlace" to ("Another place" to "مكان آخر"),
+        "latitude" to ("Latitude, e.g. 30.0444" to "خط العرض، مثل 30.0444"),
+        "longitude" to ("Longitude, e.g. 31.2357" to "خط الطول، مثل 31.2357"),
+        "timeZoneHint" to ("Time zone, e.g. Africa/Cairo" to "المنطقة الزمنية، مثل Africa/Cairo"),
+        "useThisPlace" to ("Use this place" to "استخدم هذا المكان"),
+        "invalidLocation" to
+            ("Check the values: latitude −90 to 90, longitude −180 to 180, and a time zone like Europe/London." to
+                "تحقق من القيم: خط العرض من −90 إلى 90، وخط الطول من −180 إلى 180، ومنطقة زمنية مثل Europe/London."),
+        "blockMoveTitle" to
+            ("%1 planned sessions move with this block" to "%1 جلسات مخططة تتحرك مع هذه الفترة"),
+        "dragToPlan" to
+            ("Long-press a task and drop it on the timeline to plan it" to
+                "اضغط مطولًا على مهمة واسحبها إلى الجدول الزمني لتخطيطها"),
+        "newEvent" to ("New event" to "حدث جديد"),
+        "editEvent" to ("Edit event" to "تعديل الحدث"),
+        "eventTitle" to ("What's happening?" to "ما الحدث؟"),
+        "allDay" to ("All day" to "طوال اليوم"),
+        "location" to ("Location" to "المكان"),
+        "deleteEvent" to ("Delete event" to "حذف الحدث"),
+        "calendar" to ("Calendar" to "التقويم"),
+        "inBlock" to ("Part of a time block" to "ضمن فترة وقت"),
+        "none" to ("None" to "بلا"),
+        "noPrayerTimes" to
+            ("Prayer times for that day aren't available; pick a fixed time." to
+                "أوقات الصلاة لذلك اليوم غير متاحة؛ اختر وقتًا محددًا."),
+        "subtasks" to ("Subtasks" to "المهام الفرعية"),
+        "addSubtask" to ("Add a subtask" to "أضف مهمة فرعية"),
+        "moveUp" to ("Move up" to "تحريك لأعلى"),
+        "moveDown" to ("Move down" to "تحريك لأسفل"),
+        "asSubtasks" to ("As subtasks of one task" to "كمهام فرعية لمهمة واحدة"),
+        "context" to ("Context" to "السياق"),
+        "anywhere" to ("Anywhere" to "في أي مكان"),
+        "context_home" to ("At home" to "في المنزل"),
+        "context_computer" to ("At the computer" to "على الحاسوب"),
+        "context_phone" to ("Phone" to "الهاتف"),
+        "context_errands" to ("Errands" to "مشاوير"),
+        "context_outside" to ("Outside" to "في الخارج"),
         "inCalendar" to ("In Google Calendar" to "في تقويم Google"),
         "waitingForCalendar" to ("Waiting for Google Calendar" to "بانتظار تقويم Google"),
         "openInKeep" to ("Open in Keep" to "افتح في Keep"),

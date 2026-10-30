@@ -74,6 +74,7 @@ fun TaskDetailScreen(vm: AppViewModel, s: Snapshot, id: String, fresh: Boolean) 
                     SourceLink(source) { vm.navigator.open(Screen.Process(source.id)) }
                 }
             task.keepUrl?.let { KeepLink(it) }
+            Subtasks(vm, task, s.tasks)
             SessionsCard(schedule, s.prayer.zone, vm, task, googleConnected = s.calendars != null)
         }
         BottomActions(vm, s, task, fresh, hasSessions = schedule.upcoming.isNotEmpty())
@@ -152,6 +153,9 @@ private fun DetailsCard(task: Task, s: Snapshot, vm: AppViewModel, save: (Task) 
     Column(Modifier.fillMaxWidth().card().padding(horizontal = 16.dp, vertical = 8.dp)) {
         DetailRow(tr("listLabel"), listName(s, task.listId) ?: "—") {
             save(TaskEdits.nextList(task, s.lists))
+        }
+        DetailRow(tr("context"), task.context?.let { tr("context_$it") } ?: tr("anywhere")) {
+            save(TaskEdits.nextContext(task))
         }
         DetailRow(tr("estimate"), task.estimateMin?.let { tr("minutes", it) } ?: tr("notSet")) {
             save(TaskEdits.nextEstimate(task))

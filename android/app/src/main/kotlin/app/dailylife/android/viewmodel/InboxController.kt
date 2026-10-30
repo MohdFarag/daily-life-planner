@@ -67,9 +67,17 @@ class InboxController(private val ctx: ControllerScope) {
         taskEntryIds: List<String>,
         referenceEntryIds: List<String>,
         listId: String = WORK_LIST,
+        asSubtasks: Boolean = false,
     ) =
         apply(
-            Triage.resolveEntries(item, taskEntryIds, referenceEntryIds, listId, ctx.now()),
+            Triage.resolveEntries(
+                item,
+                taskEntryIds,
+                referenceEntryIds,
+                listId,
+                ctx.now(),
+                asSubtasks,
+            ),
             message = "movedTo",
             argKey = "tasks",
         )

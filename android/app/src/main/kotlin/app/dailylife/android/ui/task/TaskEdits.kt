@@ -8,6 +8,12 @@ import java.time.LocalDate
 object TaskEdits {
     private val ESTIMATES = listOf(5, 10, 15, 20, 30, 45, 60, 90, 120)
 
+    /** Contexts offered on the task screen (ORG01); null means "anywhere". */
+    val CONTEXTS = listOf(null, "home", "computer", "phone", "errands", "outside")
+
+    fun nextContext(task: Task): Task =
+        task.copy(context = CONTEXTS[(CONTEXTS.indexOf(task.context) + 1) % CONTEXTS.size])
+
     /** Steps through common estimates; after the longest comes "not set". */
     fun nextEstimate(task: Task): Task {
         val index = ESTIMATES.indexOf(task.estimateMin)

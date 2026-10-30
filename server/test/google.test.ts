@@ -230,6 +230,48 @@ describe("Google sync", () => {
     expect(status.json()).toMatchObject({ connected: false });
   });
 
+  it("creates subtasks under their parent and moves them when re-parented (TSK03)", async () => {
+    const { headers } = await signUp(ctx);
+    const created = iso(-1);
+    await push(headers, [
+      { entity: "lists", id: "personal", fields: { id: "personal", name: "Personal" } },
+      {
+        entity: "tasks",
+        id: "trip",
+        fields: { id: "trip", title: "Plan trip", listId: "personal", status: "NEEDS_ACTION", createdAt: created },
+      },
+      {
+        entity: "tasks",
+        id: "move",
+        fields: { id: "move", title: "Move house", listId: "personal", status: "NEEDS_ACTION", createdAt: created },
+      },
+      {
+        entity: "tasks",
+        id: "tickets",
+        fields: {
+          id: "tickets",
+          title: "Buy tickets",
+          listId: "personal",
+          status: "NEEDS_ACTION",
+          createdAt: created,
+          parentId: "trip",
+          position: "00000000000000000000",
+        },
+      },
+    ]);
+    await connect(headers);
+    expect(await sync(headers)).toEqual([]);
+    const inGoogle = (title: string) => [...google.tasksByList.values()].flat().find((t) => t.title === title && !t.deleted)!;
+    expect(inGoogle("Buy tickets").parent).toBe(inGoogle("Plan trip").id);
+
+    const r = await records(headers);
+    await push(headers, [
+      { entity: "tasks", id: "tickets", fields: { parentId: "move" }, baseVersion: r.get("tasks", "tickets")!.version },
+    ]);
+    expect(await sync(headers)).toEqual([]);
+    expect(inGoogle("Buy tickets").parent).toBe(inGoogle("Move house").id);
+  });
+
   it("revokes Google access when the account is deleted (SEC03)", async () => {
     const { headers, password } = await signUp(ctx);
     await connect(headers);

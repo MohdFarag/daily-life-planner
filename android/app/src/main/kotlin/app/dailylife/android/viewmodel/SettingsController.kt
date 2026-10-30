@@ -1,7 +1,9 @@
 package app.dailylife.android.viewmodel
 
 import app.dailylife.android.data.Prefs
+import app.dailylife.android.domain.BlockMove
 import app.dailylife.android.domain.DataExport
+import app.dailylife.android.domain.SessionMove
 import app.dailylife.core.model.BlockPolicy
 import app.dailylife.core.model.TaskList
 import app.dailylife.core.model.TimeBlock
@@ -37,6 +39,25 @@ class SettingsController(private val ctx: ControllerScope) {
                     BlockPolicy.GUIDING,
                 )
             )
+        }
+
+    /** What retiming [block] would do to its sessions; empty when nothing moves (BLK04). */
+    fun previewBlockMove(block: TimeBlock): List<SessionMove> {
+        val old = ctx.snapshot.blocks.firstOrNull { it.id == block.id } ?: return emptyList()
+        return BlockMove.preview(
+            old,
+            block,
+            ctx.snapshot.sessions,
+            ctx.snapshot.prayer.zone,
+            ctx.now(),
+        )
+    }
+
+    /** Applies a previewed block move: the block and its sessions together. */
+    fun moveBlock(block: TimeBlock, moves: List<SessionMove>) =
+        ctx.scope.launch {
+            ctx.repository.saveBlock(block)
+            if (moves.isNotEmpty()) ctx.repository.saveSessions(moves.map { it.after })
         }
 
     fun saveBlock(block: TimeBlock) = ctx.scope.launch { ctx.repository.saveBlock(block) }

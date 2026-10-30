@@ -50,6 +50,7 @@ import app.dailylife.android.ui.i18n.LocalLang
 import app.dailylife.android.ui.i18n.tr
 import app.dailylife.android.ui.inbox.InboxScreen
 import app.dailylife.android.ui.more.MoreScreen
+import app.dailylife.android.ui.plan.EventSheet
 import app.dailylife.android.ui.plan.PlanScreen
 import app.dailylife.android.ui.plan.ScheduleSheet
 import app.dailylife.android.ui.process.ProcessScreen
@@ -102,6 +103,7 @@ fun AppRoot(vm: AppViewModel, onExit: () -> Unit) {
             }
             if (vm.captureOpen) CaptureSheet(vm)
             vm.scheduling?.let { ScheduleSheet(vm, s, it) }
+            vm.editingEvent?.let { EventSheet(vm, s, it) }
             vm.capture.duplicate?.let { DuplicateShareDialog(it, vm) }
         }
     }

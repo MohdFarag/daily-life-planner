@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import app.dailylife.android.data.Snapshot
-import app.dailylife.android.navigation.Screen
 import app.dailylife.android.ui.components.Corner8
 import app.dailylife.android.ui.components.card
 import app.dailylife.android.ui.format.hm
@@ -45,8 +44,10 @@ internal fun Agenda(vm: AppViewModel, s: Snapshot, items: List<PlanItem>) {
                 Modifier.fillMaxWidth()
                     .heightIn(min = 52.dp)
                     .then(
-                        if (b.taskId != null)
-                            Modifier.clickable { vm.navigator.open(Screen.TaskDetail(b.taskId)) }
+                        if (b.opens)
+                            Modifier.clickable {
+                                vm.openPlanItem(b, b.start.atZone(s.prayer.zone).toLocalDate())
+                            }
                         else Modifier
                     )
                     .padding(12.dp),

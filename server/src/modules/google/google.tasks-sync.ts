@@ -88,6 +88,12 @@ export async function syncTasks(ctx: SyncContext): Promise<void> {
       let saved: GTask;
       if (link && link.containerId === list.googleId) {
         saved = await ctx.api.patchTask(list.googleId, link.googleId, body);
+        // Subtask parent and order changed on a device: move it in Google too (TSK03).
+        if (typeof doc.parentId === "string" || typeof doc.position === "string") {
+          const { parent, previous } = placement(id, doc, tasks, byLocal);
+          if (parent !== saved.parent || previous !== undefined)
+            saved = await ctx.api.moveTask(list.googleId, link.googleId, parent, previous);
+        }
       } else {
         // New, or moved to another list: Google tasks cannot change list, so recreate.
         if (link) await ctx.api.deleteTask(link.containerId, link.googleId);
@@ -130,6 +136,24 @@ export async function syncTasks(ctx: SyncContext): Promise<void> {
       await ctx.saveCursor(scope, startedAt);
     });
   }
+}
+
+/** Sortable position; tasks without one go last. */
+const positionOf = (t: TaskDoc) => (typeof t.position === "string" ? t.position : "~");
+
+/** Where a task sits in Google: its parent's Google id and the Google id of the sibling before it. */
+function placement(id: string, doc: TaskDoc, tasks: Map<string, { doc: TaskDoc }>, byLocal: Map<string, LinkRow>) {
+  const parentLocal = typeof doc.parentId === "string" ? doc.parentId : undefined;
+  const siblings = [...tasks.values()]
+    .map((t) => t.doc)
+    .filter((t) => (typeof t.parentId === "string" ? t.parentId : undefined) === parentLocal)
+    .sort((a, b) => positionOf(a).localeCompare(positionOf(b)) || a.createdAt.localeCompare(b.createdAt));
+  const index = siblings.findIndex((t) => t.id === id);
+  const before = index > 0 ? siblings[index - 1] : undefined;
+  return {
+    parent: parentLocal ? byLocal.get(parentLocal)?.googleId : undefined,
+    previous: before ? byLocal.get(before.id)?.googleId : undefined,
+  };
 }
 
 async function applyGoogleTask(ctx: SyncContext, g: GTask, localListId: string, googleListId: string, byGoogle: Map<string, LinkRow>) {

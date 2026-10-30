@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import app.dailylife.android.ui.components.AppButton
 import app.dailylife.android.ui.components.ButtonStyle
 import app.dailylife.android.ui.components.Checkbox
+import app.dailylife.android.ui.components.Chip
 import app.dailylife.android.ui.components.Corner16
 import app.dailylife.android.ui.components.Field
 import app.dailylife.android.ui.components.MenuRow
@@ -171,6 +172,7 @@ internal fun DoingNow(vm: AppViewModel, item: CaptureItem) {
 internal fun EntriesPanel(vm: AppViewModel, item: CaptureItem) {
     val choice =
         remember(item.id) { mutableStateMapOf<String, String>() } // entryId -> "task" | "ref"
+    var asSubtasks by remember(item.id) { mutableStateOf(false) }
     Text(tr("processEntries"), style = AppType.h3)
     Column(Modifier.fillMaxWidth().card().padding(8.dp)) {
         item.entries
@@ -202,6 +204,9 @@ internal fun EntriesPanel(vm: AppViewModel, item: CaptureItem) {
                 }
             }
     }
+    // Several tasks can stay together as subtasks of one task named after the item (TRI03).
+    if (choice.values.count { it == "task" } > 1)
+        Chip(tr("asSubtasks"), asSubtasks, { asSubtasks = !asSubtasks })
     AppButton(
         tr("applyEntries"),
         {
@@ -209,6 +214,7 @@ internal fun EntriesPanel(vm: AppViewModel, item: CaptureItem) {
                 item,
                 choice.filterValues { it == "task" }.keys.toList(),
                 choice.filterValues { it == "ref" }.keys.toList(),
+                asSubtasks = asSubtasks,
             )
             choice.clear()
         },

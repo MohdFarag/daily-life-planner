@@ -16,15 +16,22 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import app.dailylife.android.data.Snapshot
-import app.dailylife.android.navigation.Screen
 import app.dailylife.android.ui.components.Corner12
 import app.dailylife.android.ui.components.Corner8
 import app.dailylife.android.ui.format.blockLabel
@@ -36,6 +43,7 @@ import app.dailylife.android.ui.theme.AppColors
 import app.dailylife.android.ui.theme.AppType
 import app.dailylife.android.viewmodel.AppViewModel
 import app.dailylife.core.model.BlockPolicy
+import app.dailylife.core.model.Task
 import app.dailylife.core.model.TimeBlock
 import java.time.Instant
 import java.time.LocalDate
@@ -50,7 +58,7 @@ private const val SCROLL_TO_HOUR = 9
 private val LABEL_WIDTH = 58.dp
 
 /** Maps clock times on [date] to vertical positions (in dp) on the timeline. */
-private class TimelineScale(private val date: LocalDate, private val zone: ZoneId) {
+internal class TimelineScale(private val date: LocalDate, private val zone: ZoneId) {
     val totalHeight: Float = (LAST_HOUR - FIRST_HOUR) * HOUR_HEIGHT_DP
 
     fun y(time: LocalTime): Float =
@@ -64,13 +72,45 @@ private class TimelineScale(private val date: LocalDate, private val zone: ZoneI
         val local = instant.atZone(zone)
         return if (local.toLocalDate().isAfter(date)) totalHeight else y(local.toLocalTime())
     }
+
+    /** The time at a height on the timeline, to the nearest quarter hour (for dropped tasks). */
+    fun timeAt(yDp: Float): LocalTime {
+        val minutes = FIRST_HOUR * 60 + yDp.coerceIn(0f, totalHeight) / HOUR_HEIGHT_DP * 60
+        val quarter = (Math.round(minutes / 15f) * 15).coerceAtMost(LAST_HOUR * 60 - 15)
+        return LocalTime.of(quarter / 60, quarter % 60)
+    }
+}
+
+/**
+ * A task being dragged from "Not planned" onto the timeline (PLN02). The timeline reports where it
+ * is on screen; dropping inside it proposes that time in the scheduling sheet.
+ */
+internal class TaskDrag {
+    var task by mutableStateOf<Task?>(null)
+    var pointer by mutableStateOf(Offset.Zero)
+    var timeline: Rect? = null
+    var scrollPx = 0
+
+    /** The time under the pointer, or null when it is not over the timeline. */
+    fun dropTime(scale: TimelineScale, density: Density): LocalTime? {
+        val area = timeline ?: return null
+        if (!area.contains(pointer)) return null
+        return scale.timeAt(with(density) { (pointer.y - area.top + scrollPx).toDp().value })
+    }
 }
 
 /** The day as a scrollable timeline: blocks underneath, hour grid, items, and the current time. */
 @Composable
-internal fun DayTimeline(vm: AppViewModel, s: Snapshot, date: LocalDate, items: List<PlanItem>) {
+internal fun DayTimeline(
+    vm: AppViewModel,
+    s: Snapshot,
+    date: LocalDate,
+    items: List<PlanItem>,
+    drag: TaskDrag? = null,
+) {
     val scale = TimelineScale(date, s.prayer.zone)
     val scroll = rememberScrollState()
+    drag?.scrollPx = scroll.value
     val density = LocalDensity.current
     LaunchedEffect(date) {
         scroll.scrollTo(
@@ -78,7 +118,15 @@ internal fun DayTimeline(vm: AppViewModel, s: Snapshot, date: LocalDate, items: 
         )
     }
 
-    Box(Modifier.fillMaxWidth().height(372.dp).clip(Corner12).verticalScroll(scroll)) {
+    val dropping = drag?.task != null
+    Box(
+        Modifier.fillMaxWidth()
+            .height(372.dp)
+            .clip(Corner12)
+            .then(if (dropping) Modifier.border(2.dp, AppColors.primary, Corner12) else Modifier)
+            .onGloballyPositioned { drag?.timeline = it.boundsInRoot() }
+            .verticalScroll(scroll)
+    ) {
         Box(Modifier.fillMaxWidth().height((scale.totalHeight + 12).dp)) {
             vm.dayPlanner.dayContext(s, date).activeBlocks.forEach { BlockBackground(it, scale) }
             HourGrid()
@@ -87,7 +135,7 @@ internal fun DayTimeline(vm: AppViewModel, s: Snapshot, date: LocalDate, items: 
                     item,
                     scale,
                     s.prayer.zone,
-                    onOpenTask = { vm.navigator.open(Screen.TaskDetail(it)) },
+                    onOpen = { vm.openPlanItem(it, date) },
                 )
             }
             if (date == vm.today()) NowLine(scale.y(vm.now()))
@@ -138,12 +186,11 @@ private fun TimelineItem(
     item: PlanItem,
     scale: TimelineScale,
     zone: ZoneId,
-    onOpenTask: (String) -> Unit,
+    onOpen: (PlanItem) -> Unit,
 ) {
     val top = scale.y(item.start)
     val height = (scale.y(item.end) - top - 2).coerceAtLeast(22f)
     val (background, foreground) = colorsFor(item)
-    val taskId = item.taskId
     Column(
         Modifier.offset(x = 62.dp, y = (top + 1).dp)
             .fillMaxWidth()
@@ -151,7 +198,7 @@ private fun TimelineItem(
             .height(height.dp)
             .clip(Corner8)
             .background(background)
-            .then(if (taskId != null) Modifier.clickable { onOpenTask(taskId) } else Modifier)
+            .then(if (item.opens) Modifier.clickable { onOpen(item) } else Modifier)
             .padding(horizontal = 10.dp, vertical = 2.dp),
         verticalArrangement = Arrangement.Center,
     ) {

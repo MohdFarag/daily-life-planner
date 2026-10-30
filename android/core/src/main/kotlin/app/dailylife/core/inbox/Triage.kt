@@ -160,7 +160,8 @@ object Triage {
 
     /**
      * Resolves individual list entries: some become tasks, some a reference (AC03). Unselected
-     * entries stay unprocessed and the item stays in the inbox until all are resolved.
+     * entries stay unprocessed and the item stays in the inbox until all are resolved. With
+     * [asSubtasks], the tasks become ordered subtasks of one task named after the item (TRI03).
      */
     fun resolveEntries(
         item: CaptureItem,
@@ -168,20 +169,32 @@ object Triage {
         referenceEntryIds: List<String>,
         listId: String,
         now: Instant,
+        asSubtasks: Boolean = false,
     ): TriageOutcome {
         val existingTasks = item.derivedTaskIds.size
-        val tasks =
-            item.entries
-                .filter { it.id in taskEntryIds }
-                .mapIndexed { i, e ->
-                    Task(
-                        id = "${item.id}:task:${existingTasks + i}",
-                        title = e.text,
-                        listId = listId,
-                        sourceItemId = item.id,
-                        createdAt = now,
-                    )
-                }
+        val selected = item.entries.filter { it.id in taskEntryIds }
+        val parent =
+            if (asSubtasks && selected.isNotEmpty())
+                Task(
+                    id = "${item.id}:task:$existingTasks",
+                    title = item.title,
+                    listId = listId,
+                    sourceItemId = item.id,
+                    createdAt = now,
+                )
+            else null
+        val firstChild = existingTasks + if (parent != null) 1 else 0
+        val tasks = selected.mapIndexed { i, e ->
+            Task(
+                id = "${item.id}:task:${firstChild + i}",
+                title = e.text,
+                listId = listId,
+                sourceItemId = item.id,
+                createdAt = now,
+                parentId = parent?.id,
+                position = parent?.let { position(i) },
+            )
+        }
         val refs =
             item.entries
                 .filter { it.id in referenceEntryIds }
@@ -209,21 +222,25 @@ object Triage {
                     else -> e
                 }
             }
+        val created = listOfNotNull(parent) + tasks
         val updated =
             item.copy(
                 entries = entries,
-                derivedTaskIds = item.derivedTaskIds + tasks.map { it.id },
+                derivedTaskIds = item.derivedTaskIds + created.map { it.id },
                 state =
                     if (entries.all { it.resolvedAs != null }) CaptureState.PROCESSED
                     else item.state,
             )
         return TriageOutcome(
             updated,
-            tasks,
+            created,
             refs,
-            Undo(item, tasks.map { it.id }, refs.map { it.id }),
+            Undo(item, created.map { it.id }, refs.map { it.id }),
         )
     }
+
+    /** Sortable sibling order, in the same zero-padded form Google Tasks uses. */
+    fun position(index: Int): String = index.toString().padStart(20, '0')
 
     /**
      * Moves an item to app trash with a visible purge date (DEL01). The external source is never

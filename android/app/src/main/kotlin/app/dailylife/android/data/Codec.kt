@@ -197,6 +197,7 @@ object Codec {
             .put("position", t.position)
             .put("keepUrl", t.keepUrl)
             .put("googleUrl", t.googleUrl)
+            .put("context", t.context)
 
     fun task(o: JSONObject) =
         Task(
@@ -217,6 +218,7 @@ object Codec {
             position = o.str("position"),
             keepUrl = o.str("keepUrl"),
             googleUrl = o.str("googleUrl"),
+            context = o.str("context"),
         )
 
     fun encode(l: TaskList): JSONObject = JSONObject().put("id", l.id).put("name", l.name)
@@ -312,6 +314,8 @@ object Codec {
             .put("location", e.location)
             .put("description", e.description)
             .put("googleId", e.googleId)
+            .put("rule", e.rule?.let(::encode))
+            .put("blockId", e.blockId)
 
     fun event(o: JSONObject) =
         CalendarEvent(
@@ -325,6 +329,8 @@ object Codec {
             o.str("location"),
             o.str("description"),
             o.str("googleId"),
+            o.optJSONObject("rule")?.let(::rule),
+            o.str("blockId"),
         )
 
     // Rule bindings
