@@ -7,6 +7,44 @@ val LocalLang = compositionLocalOf { "en" }
 
 private val S: Map<String, Pair<String, String>> =
     mapOf(
+        "inCalendar" to ("In Google Calendar" to "في تقويم Google"),
+        "waitingForCalendar" to ("Waiting for Google Calendar" to "بانتظار تقويم Google"),
+        "openInKeep" to ("Open in Keep" to "افتح في Keep"),
+        "googleSection" to ("Google Tasks & Calendar" to "مهام Google والتقويم"),
+        "googleExplain" to
+            ("Sync tasks with Google Tasks, put work sessions in Google Calendar with a reminder, and see your appointments in the plan." to
+                "زامن المهام مع مهام Google، وضع جلسات العمل في تقويم Google مع تذكير، واعرض مواعيدك في الخطة."),
+        "connectGoogle" to ("Connect Google" to "ربط Google"),
+        "googleNotConfigured" to
+            ("Google isn't set up on this server yet." to "لم يُعدّ Google على هذا الخادم بعد."),
+        "googleAccount" to ("Google account" to "حساب Google"),
+        "googleReconnect" to
+            ("Google access ended. Disconnect and connect again." to
+                "انتهى الوصول إلى Google. افصل ثم اربط مجددًا."),
+        "googleSyncProblem" to
+            ("Last Google sync had a problem: %1" to "واجهت آخر مزامنة مع Google مشكلة: %1"),
+        "calendars" to ("Calendars" to "التقويمات"),
+        "calendarsSub" to ("Choose what shows in the plan" to "اختر ما يظهر في الخطة"),
+        "disconnectGoogle" to ("Disconnect Google" to "فصل Google"),
+        "googleConnected" to ("Google connected" to "تم ربط Google"),
+        "googleDenied" to ("Google access was not granted" to "لم يُمنح الوصول إلى Google"),
+        "googleFailed" to
+            ("Connecting Google didn't work. Try again." to "تعذّر ربط Google. حاول مجددًا."),
+        "googleNotConnected" to
+            ("Connect Google from Account & sync first." to
+                "اربط Google أولًا من الحساب والمزامنة."),
+        "calendarsExplain" to
+            ("Shown calendars appear in your plan. New events go to the default calendar." to
+                "تظهر التقويمات المعروضة في خطتك. تُضاف الأحداث الجديدة إلى التقويم الافتراضي."),
+        "appCalendars" to ("The app's calendars" to "تقويمات التطبيق"),
+        "appCalendarSessions" to ("work sessions with reminders" to "جلسات العمل مع التذكيرات"),
+        "appCalendarBlocks" to ("time blocks" to "فترات الوقت"),
+        "showInPlan" to ("Show in plan" to "اعرض في الخطة"),
+        "defaultCalendar" to ("Default for new events" to "الافتراضي للأحداث الجديدة"),
+        "readOnlyCalendar" to ("Read only" to "للقراءة فقط"),
+        "newCalendar" to ("New calendar" to "تقويم جديد"),
+        "calendarName" to ("Calendar name" to "اسم التقويم"),
+        "createCalendar" to ("Create calendar" to "إنشاء تقويم"),
         "assistantAccess" to ("Assistant access (MCP)" to "وصول المساعد (MCP)"),
         "assistantAccessExplain" to
             ("Let an AI assistant read your plan and add or schedule tasks. It gets its own token, which you can revoke any time; it never sees your password or Google account." to

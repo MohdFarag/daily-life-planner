@@ -35,6 +35,23 @@ data class SyncOutbox(
     }
 }
 
+/** A Google calendar as the server lists it (CAL02). [appRole] marks the app's own calendars. */
+data class CalendarEntry(
+    val id: String,
+    val summary: String,
+    val primary: Boolean,
+    val accessRole: String,
+    val visible: Boolean,
+    val appRole: String? = null,
+    val color: String? = null,
+) {
+    val writable: Boolean
+        get() = accessRole == "owner" || accessRole == "writer"
+}
+
+/** The user's Google calendars, which to show, and where new events go. Present while connected. */
+data class CalendarSettings(val list: List<CalendarEntry>, val defaultCalendarId: String?)
+
 /** Everything stored on the device, as one immutable value the UI renders from. */
 data class Snapshot(
     val items: List<CaptureItem> = emptyList(),
@@ -49,6 +66,8 @@ data class Snapshot(
     val prefs: Prefs = Prefs(),
     val focus: FocusSession? = null,
     val outbox: SyncOutbox = SyncOutbox(),
+    /** Null while Google is not connected. */
+    val calendars: CalendarSettings? = null,
     val loaded: Boolean = false,
 ) {
     val lang: String

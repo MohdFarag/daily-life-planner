@@ -39,6 +39,7 @@ import app.dailylife.android.navigation.Screen
 import app.dailylife.android.navigation.isTabRoot
 import app.dailylife.android.navigation.showsBottomBar
 import app.dailylife.android.ui.account.AccountScreen
+import app.dailylife.android.ui.account.CalendarsScreen
 import app.dailylife.android.ui.capture.CaptureSheet
 import app.dailylife.android.ui.collections.CollectionsScreen
 import app.dailylife.android.ui.collections.TasksScreen
@@ -125,6 +126,7 @@ private fun ScreenHost(screen: Screen, vm: AppViewModel, s: Snapshot) =
         Screen.Lists -> ListsScreen(vm, s)
         Screen.Preferences -> PreferencesScreen(vm, s)
         Screen.Account -> AccountScreen(vm, s)
+        Screen.Calendars -> CalendarsScreen(vm, s)
     }
 
 @Composable

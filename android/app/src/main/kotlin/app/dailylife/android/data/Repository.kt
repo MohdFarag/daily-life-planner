@@ -6,6 +6,7 @@ import app.dailylife.core.focus.FocusSession
 import app.dailylife.core.inbox.TriageOutcome
 import app.dailylife.core.inbox.Undo
 import app.dailylife.core.model.Attachment
+import app.dailylife.core.model.CalendarEvent
 import app.dailylife.core.model.CaptureItem
 import app.dailylife.core.model.Task
 import app.dailylife.core.model.TaskList
@@ -27,6 +28,7 @@ private object SettingKey {
     const val PREFS = "prefs"
     const val FOCUS = "focus"
     const val TIME_LOG = "timelog"
+    const val CALENDARS = "calendars"
 }
 
 /**
@@ -121,6 +123,17 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
         putSetting(SettingKey.PREFS, Codec.encode(prefs))
     }
 
+    /** Which calendars to show and where new events go (CAL02). */
+    suspend fun saveCalendarSettings(calendars: CalendarSettings) = write {
+        putSetting(SettingKey.CALENDARS, Codec.encode(calendars))
+    }
+
+    suspend fun saveEvent(event: CalendarEvent) = write {
+        db.put(Table.events, event.id, Codec.encode(event))
+    }
+
+    suspend fun deleteEvent(id: String) = write { db.delete(Table.events, id) }
+
     suspend fun saveFocus(focus: FocusSession) = write {
         putSetting(SettingKey.FOCUS, Codec.encode(focus))
     }
@@ -177,7 +190,7 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
      */
     override suspend fun applyRemote(changes: List<RemoteChange>) = remoteWrite {
         changes.forEach { change ->
-            val table = Table.entries.firstOrNull { it.name == change.entity && it.synced }
+            val table = Table.entries.firstOrNull { it.name == change.entity }
             if (table == null || ledger.isQueued(table, change.id)) return@forEach
             if (change.deleted) {
                 if (table == Table.items) deleteMedia(change.id)
@@ -306,6 +319,7 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
             prayer = settings[SettingKey.PRAYER]?.let(Codec::prayer) ?: defaultCity().settings(),
             prefs = settings[SettingKey.PREFS]?.let(Codec::prefs) ?: Prefs(),
             focus = settings[SettingKey.FOCUS]?.let(Codec::focus),
+            calendars = settings[SettingKey.CALENDARS]?.let(Codec::calendars),
             outbox = SyncOutbox(ledger.queuedKeys(), ledger.failures()),
             loaded = true,
         )

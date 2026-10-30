@@ -52,6 +52,31 @@ export type SessionDoc = z.infer<typeof SessionDoc>;
 export const ListDoc = z.looseObject({ id: z.string(), name: z.string() });
 export type ListDoc = z.infer<typeof ListDoc>;
 
+export const BlockDoc = z.looseObject({
+  id: z.string(),
+  name: z.string(),
+  start: z.string().regex(/^\d{2}:\d{2}/),
+  end: z.string().regex(/^\d{2}:\d{2}/),
+  days: z.array(z.string()).default([]),
+  policy: z.enum(["GUIDING", "PROTECTED"]),
+});
+export type BlockDoc = z.infer<typeof BlockDoc>;
+
+/** A calendar event (CAL01). [googleId] is set once it exists in Google. */
+export const EventDoc = z.looseObject({
+  id: z.string(),
+  title: z.string(),
+  start: iso,
+  end: iso,
+  calendarId: z.string(),
+  readOnly: z.boolean().default(false),
+  allDay: z.boolean().default(false),
+  description: z.string().nullish(),
+  location: z.string().nullish(),
+  googleId: z.string().nullish(),
+});
+export type EventDoc = z.infer<typeof EventDoc>;
+
 /** Where records created through MCP say they came from (shown on the device). */
 export const MCP_SOURCE = "mcp";
 

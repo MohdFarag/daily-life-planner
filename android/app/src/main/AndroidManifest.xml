@@ -29,6 +29,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Return from Google's consent page (server callback redirects here). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="dailylife" android:host="google-connected" />
+            </intent-filter>
             <!-- Share target: Keep and any other app (CAP05) -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

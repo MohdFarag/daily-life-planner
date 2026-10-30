@@ -10,6 +10,14 @@ import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Whether Google can be used on this server, is connected, and the last sync problem. */
+data class GoogleStatus(
+    val enabled: Boolean,
+    val connected: Boolean,
+    val email: String?,
+    val lastError: String?,
+)
+
 /** An access token for an assistant (MCP); the secret itself is only shown when created. */
 data class McpToken(
     val id: String,
@@ -146,6 +154,34 @@ class ApiClient(private val accounts: SessionStore) : SyncApi, MediaApi {
 
     suspend fun deleteAccount(password: String) {
         authorized("DELETE", "/v1/account", Body.Json(JSONObject().put("password", password)))
+    }
+
+    // Google (§6) --------------------------------------------------------------------------------
+
+    suspend fun googleStatus(): GoogleStatus {
+        val o = authorized("GET", "/v1/google/status")
+        return GoogleStatus(
+            o.getBoolean("enabled"),
+            o.getBoolean("connected"),
+            if (o.isNull("email")) null else o.getString("email"),
+            if (o.isNull("lastError")) null else o.getString("lastError"),
+        )
+    }
+
+    /** The Google consent page to open in a browser. */
+    suspend fun googleConnectUrl(): String =
+        authorized("POST", "/v1/google/connect").getString("url")
+
+    suspend fun googleSync() {
+        authorized("POST", "/v1/google/sync")
+    }
+
+    suspend fun googleDisconnect() {
+        authorized("DELETE", "/v1/google")
+    }
+
+    suspend fun createGoogleCalendar(name: String) {
+        authorized("POST", "/v1/google/calendars", Body.Json(JSONObject().put("summary", name)))
     }
 
     // Assistant access (MCP03) -----------------------------------------------------------------

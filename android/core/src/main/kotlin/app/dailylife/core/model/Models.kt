@@ -112,6 +112,13 @@ data class Task(
     val sourceItemId: String? = null,
     val createdAt: Instant,
     val completedAt: Instant? = null,
+    /** The parent task when this is a subtask (TSK03). */
+    val parentId: String? = null,
+    /** Order among siblings, as Google Tasks sorts it. */
+    val position: String? = null,
+    /** The Keep note a Google task links to; shown, never copied into the inbox (TSK02). */
+    val keepUrl: String? = null,
+    val googleUrl: String? = null,
 )
 
 data class TaskList(val id: String, val name: String)
@@ -173,6 +180,8 @@ data class TaskSession(
     val pinned: Boolean = false, // manual exception: fixed time for this occurrence (REL03)
     val state: SessionState = SessionState.PLANNED,
     val blockId: String? = null,
+    /** The Google Calendar event mirroring this session, once published (SES01). */
+    val googleEventId: String? = null,
 )
 
 enum class BlockPolicy {
@@ -200,4 +209,9 @@ data class CalendarEvent(
     val end: Instant,
     val calendarId: String,
     val readOnly: Boolean = false,
+    val allDay: Boolean = false,
+    val location: String? = null,
+    val description: String? = null,
+    /** Set once the event exists in Google (CAL01). */
+    val googleId: String? = null,
 )

@@ -57,6 +57,16 @@ class AccountService(
         accounts.signedOut()
     }
 
+    suspend fun googleStatus() = api.googleStatus()
+
+    suspend fun googleConnectUrl() = api.googleConnectUrl()
+
+    suspend fun googleSync() = api.googleSync()
+
+    suspend fun googleDisconnect() = api.googleDisconnect()
+
+    suspend fun createGoogleCalendar(name: String) = api.createGoogleCalendar(name)
+
     suspend fun assistantTokens() = api.mcpTokens()
 
     suspend fun createAssistantToken(name: String) = api.createMcpToken(name)

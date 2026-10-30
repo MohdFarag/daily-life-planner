@@ -117,6 +117,7 @@ private fun SignedIn(vm: AppViewModel, s: Snapshot, account: Account, status: Sy
         }
     }
 
+    GoogleSection(vm)
     AssistantAccess(vm, account)
 
     SectionLabel(tr("account"))

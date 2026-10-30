@@ -35,7 +35,13 @@ import java.time.ZoneId
 
 /** The task's repeating rules and upcoming sessions; tap a session to edit it. */
 @Composable
-internal fun SessionsCard(schedule: TaskSchedule, zone: ZoneId, vm: AppViewModel, task: Task) {
+internal fun SessionsCard(
+    schedule: TaskSchedule,
+    zone: ZoneId,
+    vm: AppViewModel,
+    task: Task,
+    googleConnected: Boolean,
+) {
     val (rules, sessions) = schedule
     Column(
         Modifier.fillMaxWidth().card().padding(16.dp),
@@ -52,6 +58,7 @@ internal fun SessionsCard(schedule: TaskSchedule, zone: ZoneId, vm: AppViewModel
             SessionRow(
                 session,
                 zone,
+                calendarNoteKey(session, googleConnected),
                 onEdit = { vm.scheduling = ScheduleTarget(task.id, session) },
                 onDelete = { vm.tasks.deleteSession(session) },
             )
@@ -79,6 +86,7 @@ private fun RuleRow(rule: RelativeRule, onRemove: () -> Unit) {
 private fun SessionRow(
     session: TaskSession,
     zone: ZoneId,
+    calendarNote: String?,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -88,6 +96,7 @@ private fun SessionRow(
             "↻".takeIf { session.timing is TimingRule.Relative },
             tr("pinned").takeIf { session.pinned },
             tr("needsReview").takeIf { needsReview },
+            calendarNote?.let { tr(it) },
         )
     val text =
         (listOf(
