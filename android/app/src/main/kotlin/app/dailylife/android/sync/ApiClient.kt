@@ -10,6 +10,14 @@ import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** An access token for an assistant (MCP); the secret itself is only shown when created. */
+data class McpToken(
+    val id: String,
+    val name: String,
+    val expiresAt: String,
+    val lastUsedAt: String?,
+)
+
 /** The server's view of an upload. */
 data class MediaInfo(val id: String, val receivedBytes: Long, val complete: Boolean)
 
@@ -139,6 +147,31 @@ class ApiClient(private val accounts: SessionStore) : SyncApi, MediaApi {
     suspend fun deleteAccount(password: String) {
         authorized("DELETE", "/v1/account", Body.Json(JSONObject().put("password", password)))
     }
+
+    // Assistant access (MCP03) -----------------------------------------------------------------
+
+    suspend fun mcpTokens(): List<McpToken> {
+        val list = authorized("GET", "/v1/mcp/tokens").getJSONArray("tokens")
+        return List(list.length()) { mcpToken(list.getJSONObject(it)) }
+    }
+
+    /** Creates a token; returns it with the secret, which the server never shows again. */
+    suspend fun createMcpToken(name: String): Pair<McpToken, String> {
+        val o = authorized("POST", "/v1/mcp/tokens", Body.Json(JSONObject().put("name", name)))
+        return mcpToken(o) to o.getString("token")
+    }
+
+    suspend fun revokeMcpToken(id: String) {
+        authorized("DELETE", "/v1/mcp/tokens/$id")
+    }
+
+    private fun mcpToken(o: JSONObject) =
+        McpToken(
+            o.getString("id"),
+            o.getString("name"),
+            o.getString("expiresAt"),
+            if (o.isNull("lastUsedAt")) null else o.getString("lastUsedAt"),
+        )
 
     // Session handling -----------------------------------------------------------------------
 

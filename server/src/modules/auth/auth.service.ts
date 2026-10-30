@@ -4,7 +4,7 @@ import { conflict, forbidden, unauthorized } from "../../shared/errors.js";
 import { type UserRow, usersRepository as users } from "../users/users.repository.js";
 import { authRepository as repo, type TokenHashes } from "./auth.repository.js";
 import { hashPassword, verifyPassword } from "./passwords.js";
-import { digest, newToken } from "./tokens.js";
+import { digest, newToken } from "../../shared/tokens.js";
 
 export interface TokenPair {
   accessToken: string;

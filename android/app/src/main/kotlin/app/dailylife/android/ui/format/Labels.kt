@@ -60,6 +60,7 @@ fun sourceLabel(service: String): String? =
         service == "keep" -> "Keep"
         service == "gmail" -> "Gmail"
         service == "youtube" -> "YouTube"
+        service == "mcp" -> "Assistant" // added by an AI assistant over MCP
         service.startsWith("share:") ->
             service.removePrefix("share:").substringAfterLast('.').replaceFirstChar {
                 it.uppercase()

@@ -57,6 +57,12 @@ class AccountService(
         accounts.signedOut()
     }
 
+    suspend fun assistantTokens() = api.mcpTokens()
+
+    suspend fun createAssistantToken(name: String) = api.createMcpToken(name)
+
+    suspend fun revokeAssistantToken(id: String) = api.revokeMcpToken(id)
+
     companion object {
         private val LOCAL_HOSTS = setOf("localhost", "127.0.0.1", "10.0.2.2")
 

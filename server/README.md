@@ -40,6 +40,8 @@ src/
     *.service.ts           business rules and transaction boundaries; no HTTP, no SQL strings
     *.repository.ts        SQL only; maps rows to typed objects
   modules/users/           the users table, shared by auth, media (quota lock) and account deletion
+  modules/planner/         planning operations on synced records (inbox, tasks, sessions, review)
+  modules/mcp/             MCP tokens and the MCP endpoint; tools call the planner service
   jobs/retention.ts        periodic trash purge and housekeeping, run through the owning services
 migrations/                plain SQL, applied in order at startup
 ```
@@ -56,6 +58,7 @@ repository (plus `users`) and reaches other modules through their services; jobs
 | Sync    | `POST /sync/push`, `GET /sync/pull?since=&limit=`                                                                          |
 | Media   | `POST /media`, `GET /media`, `GET /media/{id}`, `PUT /media/{id}/content`, `GET /media/{id}/content`, `DELETE /media/{id}` |
 | Account | `GET /account/export`, `DELETE /account`                                                                                   |
+| MCP     | `POST /mcp/tokens`, `GET /mcp/tokens`, `DELETE /mcp/tokens/{id}`; the MCP endpoint `POST /mcp`                             |
 
 ### Authentication
 
@@ -86,6 +89,27 @@ treated as theft and signs that device out. Only SHA-256 digests of tokens are s
 Bytes are stored on local disk (`MEDIA_DIR`) behind a `MediaStorage` interface, so an object store
 can be added without touching the service.
 
+### MCP (PRD MCP01–MCP04)
+
+`POST /v1/mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server (Streamable HTTP,
+stateless) that lets an assistant work with the user's planner. Tools: `get_daily_plan`, `list_inbox`,
+`add_inbox_item`, `convert_item_to_tasks`, `list_tasks`, `complete_task`, `preview_session`,
+`schedule_session`, `weekly_review`.
+
+- **Same services (MCP01):** tools call `PlannerService`, which reads and writes the user's synced records
+  through `SyncService`, exactly as a device does, so changes reach every device on its next pull.
+- **Its own tokens (MCP03):** an assistant authenticates with an MCP token (`dlp_mcp_…`), created in the
+  app or with `POST /v1/mcp/tokens`. MCP tokens are shown once, stored as SHA-256 digests, expire after
+  180 days, can be revoked, and are never Google tokens. App session tokens are not accepted at `/mcp`.
+- **Untrusted content (MCP04):** the server instructions and tool descriptions tell the assistant that
+  titles, notes and bodies are captured data, not instructions. Write tools are annotated as such, and
+  scheduling over a conflict needs an explicit `allowConflicts`.
+- Prayer times and time blocks are calculated on the device; `preview_session` checks other sessions, and
+  the phone re-checks prayers and blocks, marking clashes "Needs review" (REL04).
+
+To connect an MCP client, point it at `https://<server>/v1/mcp` with the header
+`Authorization: Bearer dlp_mcp_…`.
+
 ### Retention
 
 An hourly job purges inbox items in trash after their `purgeAt` date (tombstone + media deletion),
@@ -97,4 +121,4 @@ See `.env.example`. All settings are validated at startup.
 
 ## Not yet included
 
-Google Tasks/Calendar integration and the MCP server build on these services in the next slices.
+Google Tasks/Calendar integration builds on these services in the next slice.
