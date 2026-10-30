@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import app.dailylife.android.AppViewModel
 import app.dailylife.android.Screen
 import app.dailylife.android.data.Snapshot
+import app.dailylife.android.ui.listName
 import app.dailylife.android.ui.Badge
 import app.dailylife.android.ui.Btn
 import app.dailylife.android.ui.BtnStyle
@@ -90,7 +91,7 @@ fun TaskDetailScreen(vm: AppViewModel, s: Snapshot, id: String, fresh: Boolean) 
 
             Column(Modifier.fillMaxWidth().card().padding(horizontal = 16.dp, vertical = 8.dp)) {
                 val lists = s.lists
-                DetailRow(tr("listLabel"), lists.firstOrNull { it.id == task.listId }?.name ?: "—") {
+                DetailRow(tr("listLabel"), listName(s, task.listId) ?: "—") {
                     val next = lists[(lists.indexOfFirst { it.id == task.listId } + 1) % lists.size]
                     vm.saveTask(task.copy(listId = next.id))
                 }

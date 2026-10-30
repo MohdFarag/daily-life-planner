@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.dailylife.android.AppViewModel
 import app.dailylife.android.data.Snapshot
+import app.dailylife.android.ui.blockLabel
 import app.dailylife.android.ui.Btn
 import app.dailylife.android.ui.BtnStyle
 import app.dailylife.android.ui.C
@@ -114,7 +115,7 @@ fun ScheduleSheet(vm: AppViewModel, s: Snapshot, key: String) {
         is Conflict.Prayer -> translate(lang, "prayerOf", prayerName(c.anchor.prayer, lang))
         is Conflict.Event -> c.event.title
         is Conflict.Session -> s.tasks.firstOrNull { it.id == c.session.taskId }?.title ?: "—"
-        is Conflict.ProtectedBlock -> "${c.block.name} (${translate(lang, "protected")})"
+        is Conflict.ProtectedBlock -> "${blockLabel(c.block, lang)} (${translate(lang, "protected")})"
     }
 
     fun apply() {
@@ -170,9 +171,9 @@ fun ScheduleSheet(vm: AppViewModel, s: Snapshot, key: String) {
                 Text(
                     when {
                         !check.ok -> tr("conflict", check.conflicts.joinToString(", ") { conflictLabel(it) })
-                        check.insideBlock != null -> tr("fitsBlock", check.insideBlock!!.name)
+                        check.insideBlock != null -> tr("fitsBlock", blockLabel(check.insideBlock!!, lang))
                         else -> tr("free")
-                    } + check.advice.joinToString("") { " ${it.message}." },
+                    } + check.advice.joinToString("") { " " + translate(lang, "blockAdvice", blockLabel(it.block, lang)) + "." },
                     style = T.label.copy(color = if (check.ok) C.primary else C.warningText),
                 )
             }

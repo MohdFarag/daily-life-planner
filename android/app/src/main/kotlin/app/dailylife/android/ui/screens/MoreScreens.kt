@@ -45,6 +45,10 @@ import app.dailylife.android.Screen
 import app.dailylife.android.data.CITIES
 import app.dailylife.android.data.Snapshot
 import app.dailylife.android.data.settings
+import app.dailylife.android.ui.listLabel
+import app.dailylife.android.ui.blockLabel
+import app.dailylife.android.ui.cityLabel
+import app.dailylife.android.ui.listName
 import app.dailylife.android.ui.Btn
 import app.dailylife.android.ui.BtnStyle
 import app.dailylife.android.ui.C
@@ -107,9 +111,9 @@ fun MoreScreen(vm: AppViewModel, s: Snapshot) {
         NavRow(Icons.Outlined.Checklist, tr("allTasks"), tr("openCount", s.tasks.count { it.status != TaskStatus.COMPLETED })) { vm.go(Screen.Tasks) }
         NavRow(Icons.Outlined.FolderOpen, tr("collections"), tr("collectionsSub")) { vm.go(Screen.Collections) }
         SectionLabel(tr("settings"))
-        NavRow(Icons.Outlined.NightsStay, tr("prayerTimes"), s.prayer.label.ifEmpty { "%.2f, %.2f".format(s.prayer.latitude, s.prayer.longitude) }) { vm.go(Screen.PrayerSettings) }
+        NavRow(Icons.Outlined.NightsStay, tr("prayerTimes"), cityLabel(s.prayer, s.prefs.lang)) { vm.go(Screen.PrayerSettings) }
         NavRow(Icons.Outlined.ViewTimeline, tr("timeBlocks"), tr("timeBlocksSub")) { vm.go(Screen.Blocks) }
-        NavRow(Icons.AutoMirrored.Outlined.List, tr("lists"), s.lists.joinToString { it.name }) { vm.go(Screen.Lists) }
+        NavRow(Icons.AutoMirrored.Outlined.List, tr("lists"), s.lists.joinToString { listLabel(it, s.prefs.lang) }) { vm.go(Screen.Lists) }
         NavRow(Icons.Outlined.Tune, tr("preferences"), tr("preferencesSub")) { vm.go(Screen.Preferences) }
         Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
             Text(tr("exportData"), style = T.label, color = C.primary, modifier = Modifier.clickable {
@@ -132,14 +136,14 @@ fun TasksScreen(vm: AppViewModel, s: Snapshot) {
         TopBar(tr("allTasks"), { vm.back() })
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Chip(tr("all"), filter == "all", { filter = "all" })
-            s.lists.forEach { l -> Chip(l.name, filter == l.id, { filter = l.id }) }
+            s.lists.forEach { l -> Chip(listLabel(l, s.prefs.lang), filter == l.id, { filter = l.id }) }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(Modifier.weight(1f)) { Field(newTitle, tr("newTask")) { newTitle = it } }
             Btn("+", { vm.addTask(newTitle.trim(), if (filter == "all") s.lists.first().id else filter); newTitle = "" }, enabled = newTitle.isNotBlank(), modifier = Modifier.size(52.dp))
         }
         tasks.forEach { t ->
-            val list = s.lists.firstOrNull { it.id == t.listId }?.name.orEmpty()
+            val list = listName(s, t.listId).orEmpty()
             val meta = listOfNotNull(list, t.deadline?.let { "${tr("deadline")} ${shortDate(it, vm.lang)}" }, if (t.important) "★" else null, t.tags.joinToString(" ") { "#$it" }.ifEmpty { null }).joinToString(" · ")
             TaskRowView(t.title, meta, t.status == TaskStatus.COMPLETED, { vm.toggleDone(t) }, { vm.go(Screen.TaskDetail(t.id)) })
         }
@@ -262,7 +266,7 @@ fun BlocksScreen(vm: AppViewModel, s: Snapshot) {
         TopBar(tr("timeBlocks"), { vm.back() })
         s.blocks.forEach { b ->
             Column(Modifier.fillMaxWidth().card().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                BasicTextField(b.name, { vm.saveBlock(b.copy(name = it)) }, textStyle = T.body, modifier = Modifier.fillMaxWidth())
+                BasicTextField(blockLabel(b, vm.lang), { vm.saveBlock(b.copy(name = it)) }, textStyle = T.body, modifier = Modifier.fillMaxWidth())
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Chip("${tr("from")} ${num(b.start.toString())}", false, { pickTime(context, b.start) { vm.saveBlock(b.copy(start = it)) } })
                     Chip("${tr("to")} ${num(b.end.toString())}", false, { pickTime(context, b.end) { if (it.isAfter(b.start)) vm.saveBlock(b.copy(end = it)) } })
@@ -278,7 +282,7 @@ fun BlocksScreen(vm: AppViewModel, s: Snapshot) {
                 Text(tr("allowedLists"), style = T.micro)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     s.lists.forEach { l ->
-                        Chip(l.name, l.id in b.allowedListIds, { vm.saveBlock(b.copy(allowedListIds = if (l.id in b.allowedListIds) b.allowedListIds - l.id else b.allowedListIds + l.id)) })
+                        Chip(listLabel(l, s.prefs.lang), l.id in b.allowedListIds, { vm.saveBlock(b.copy(allowedListIds = if (l.id in b.allowedListIds) b.allowedListIds - l.id else b.allowedListIds + l.id)) })
                     }
                 }
                 Text(tr("delete"), style = T.label, color = C.danger, modifier = Modifier.clickable { vm.deleteBlock(b) }.padding(vertical = 8.dp))
@@ -297,7 +301,7 @@ fun ListsScreen(vm: AppViewModel, s: Snapshot) {
     ScreenColumn {
         TopBar(tr("lists"), { vm.back() })
         s.lists.forEach { l ->
-            DetailRow(l.name, tr("openCount", s.tasks.count { it.listId == l.id && it.status != TaskStatus.COMPLETED }))
+            DetailRow(listLabel(l, s.prefs.lang), tr("openCount", s.tasks.count { it.listId == l.id && it.status != TaskStatus.COMPLETED }))
         }
         Field(name, tr("newList")) { name = it }
         Btn(tr("addList"), { vm.addList(name.trim()); name = "" }, enabled = name.isNotBlank())
@@ -330,7 +334,7 @@ fun SearchScreen(vm: AppViewModel, s: Snapshot) {
     ScreenColumn {
         TopBar(tr("search"), { vm.back() })
         Field(q, tr("searchHint")) { q = it }
-        tasks.forEach { t -> TaskRowView(t.title, s.lists.firstOrNull { it.id == t.listId }?.name.orEmpty(), t.status == TaskStatus.COMPLETED, { vm.toggleDone(t) }, { vm.go(Screen.TaskDetail(t.id)) }) }
+        tasks.forEach { t -> TaskRowView(t.title, listName(s, t.listId).orEmpty(), t.status == TaskStatus.COMPLETED, { vm.toggleDone(t) }, { vm.go(Screen.TaskDetail(t.id)) }) }
         items.forEach { i -> app.dailylife.android.ui.screens.InboxCard(i, vm.lang) { if (i.state == CaptureState.INBOX || i.state == CaptureState.DOING_NOW) vm.go(Screen.Process(i.id)) else vm.go(Screen.Collections) } }
         if (query.isNotEmpty() && tasks.isEmpty() && items.isEmpty()) Empty(Icons.Outlined.Search, tr("noResults"))
     }

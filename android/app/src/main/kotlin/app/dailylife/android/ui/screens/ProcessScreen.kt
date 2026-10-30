@@ -35,6 +35,10 @@ import app.dailylife.android.AppViewModel
 import app.dailylife.android.Screen
 import app.dailylife.android.Tab
 import app.dailylife.android.data.Snapshot
+import app.dailylife.android.ui.num
+import app.dailylife.android.ui.ImagePreview
+import app.dailylife.android.ui.attachmentLabel
+import app.dailylife.android.ui.itemTitle
 import app.dailylife.android.ui.Badge
 import app.dailylife.android.ui.Btn
 import app.dailylife.android.ui.BtnStyle
@@ -105,7 +109,7 @@ private fun Preview(item: CaptureItem, lang: String) {
     val context = LocalContext.current
     Column(Modifier.fillMaxWidth().card(R24).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Badge(tr(kindKey(item.kind)), C.warning, C.warningText)
-        Text(item.title, style = T.h2)
+        Text(itemTitle(item, lang), style = T.h2)
         if (item.body.isNotBlank()) Text(item.body, style = T.body.copy(color = C.secondary))
         item.url?.let { url ->
             Row(Modifier.clickable { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))) }, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -114,17 +118,14 @@ private fun Preview(item: CaptureItem, lang: String) {
             }
         }
         item.attachments.forEach { a ->
-            val f = File(a.localPath)
-            Text(
-                "${f.name} · ${a.sizeBytes / 1024} KB",
-                style = T.label, color = C.primary,
-                modifier = Modifier.clickable {
-                    runCatching {
-                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", f)
-                        context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, a.mimeType).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
-                    }
-                },
-            )
+            val open = Modifier.clickable {
+                runCatching {
+                    val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", File(a.localPath))
+                    context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, a.mimeType).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                }
+            }
+            if (a.mimeType.startsWith("image")) ImagePreview(a.localPath, attachmentLabel(a, lang), open)
+            else Text("${attachmentLabel(a, lang)} · ${num(a.sizeBytes / 1024)} KB", style = T.label, color = C.primary, modifier = open)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(kindIcon(item.kind), null, tint = C.secondary, modifier = Modifier.size(18.dp))

@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import app.dailylife.android.AppViewModel
 import app.dailylife.android.Screen
 import app.dailylife.android.data.Snapshot
+import app.dailylife.android.ui.blockLabel
+import app.dailylife.android.ui.listName
 import app.dailylife.android.ui.C
 import app.dailylife.android.ui.Chip
 import app.dailylife.android.ui.PageHeading
@@ -140,7 +142,7 @@ fun PlanScreen(vm: AppViewModel, s: Snapshot) {
         if (unplanned.isNotEmpty()) {
             Text(tr("notPlanned"), style = T.h3)
             unplanned.forEach { t ->
-                val list = s.lists.firstOrNull { it.id == t.listId }?.name.orEmpty()
+                val list = listName(s, t.listId).orEmpty()
                 TaskRowView(t.title, listOfNotNull(t.estimateMin?.let { "${num(it)} ${tr("min")}" }, list).joinToString(" · "), false, { vm.toggleDone(t) }, { vm.go(Screen.TaskDetail(t.id)) }) {
                     Text(tr("planSession"), style = T.label, color = C.primary, modifier = Modifier.clip(R8).clickable { vm.scheduleTaskId = t.id }.padding(8.dp))
                 }
@@ -170,7 +172,7 @@ private fun DayTimeline(vm: AppViewModel, s: Snapshot, date: LocalDate, blocks: 
                 Box(
                     Modifier.offset(x = 58.dp, y = top.dp).fillMaxWidth().padding(end = 60.dp).height((bottom - top).dp)
                         .clip(R12).background(Color(b.color).copy(alpha = 0.6f)).padding(horizontal = 10.dp, vertical = 6.dp),
-                ) { Text(b.name.uppercase() + if (b.policy == app.dailylife.core.model.BlockPolicy.PROTECTED) " · ${tr("protected")}" else "", style = T.micro) }
+                ) { Text(blockLabel(b, s.prefs.lang).uppercase() + if (b.policy == app.dailylife.core.model.BlockPolicy.PROTECTED) " · ${tr("protected")}" else "", style = T.micro) }
             }
             (START_HOUR..END_HOUR).forEach { h ->
                 val top = ((h - START_HOUR) * HOUR_DP).dp

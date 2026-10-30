@@ -53,7 +53,7 @@ object Codec {
         .put("state", i.state.name).put("capturedAt", i.capturedAt.toString())
         .put("attachments", JSONArray(i.attachments.map {
             JSONObject().put("id", it.id).put("localPath", it.localPath).put("mimeType", it.mimeType).put("sizeBytes", it.sizeBytes)
-                .put("durationMs", it.durationMs).put("uploadState", it.uploadState.name)
+                .put("durationMs", it.durationMs).put("uploadState", it.uploadState.name).put("name", it.name)
         }))
         .put("entries", JSONArray(i.entries.map { JSONObject().put("id", it.id).put("text", it.text).put("resolvedAs", it.resolvedAs) }))
         .put("parentId", i.parentId)
@@ -70,7 +70,7 @@ object Codec {
             source = SourceRef(src.getString("service"), src.str("externalId"), src.str("url"), src.str("account")),
             state = CaptureState.valueOf(o.getString("state")), capturedAt = Instant.parse(o.getString("capturedAt")),
             attachments = o.optJSONArray("attachments").map {
-                Attachment(it.getString("id"), it.getString("localPath"), it.getString("mimeType"), it.getLong("sizeBytes"), it.longOrNull("durationMs"), UploadState.valueOf(it.getString("uploadState")))
+                Attachment(it.getString("id"), it.getString("localPath"), it.getString("mimeType"), it.getLong("sizeBytes"), it.longOrNull("durationMs"), UploadState.valueOf(it.getString("uploadState")), it.str("name"))
             },
             entries = o.optJSONArray("entries").map { ListEntry(it.getString("id"), it.getString("text"), it.str("resolvedAs")) },
             parentId = o.str("parentId"),

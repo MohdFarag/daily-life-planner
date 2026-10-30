@@ -28,6 +28,8 @@ import app.dailylife.android.AppViewModel
 import app.dailylife.android.Screen
 import app.dailylife.android.Tab
 import app.dailylife.android.data.Snapshot
+import app.dailylife.android.ui.cityLabel
+import app.dailylife.android.ui.listName
 import app.dailylife.android.ui.Badge
 import app.dailylife.android.ui.Btn
 import app.dailylife.android.ui.BtnStyle
@@ -92,7 +94,7 @@ fun TodayScreen(vm: AppViewModel, s: Snapshot) {
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(Icons.Outlined.LocationOn, null, tint = C.warningText)
-                Text(tr("setCity") + " · ${s.prayer.label}", style = T.label, color = C.warningText)
+                Text(tr("setCity") + " · ${cityLabel(s.prayer, lang)}", style = T.label, color = C.warningText)
             }
         }
 
@@ -113,7 +115,7 @@ fun TodayScreen(vm: AppViewModel, s: Snapshot) {
                 }
                 Column(Modifier.clickable { vm.go(Screen.TaskDetail(task.id)) }, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(task.title, style = T.h2, color = C.onPrimary)
-                    val list = s.lists.firstOrNull { it.id == task.listId }?.name
+                    val list = listName(s, task.listId)
                     Text(listOfNotNull(list, task.notes.takeIf { it.isNotBlank() }).joinToString(" · "), style = T.small, color = C.onPrimary)
                 }
                 Btn(if (focused) tr("resume") else tr("startSession"), { vm.startFocus(task); vm.go(Screen.Focus) }, style = BtnStyle.LIGHT)
@@ -149,7 +151,7 @@ fun TodayScreen(vm: AppViewModel, s: Snapshot) {
                 } else {
                     val session = rest.first { "s" + it.id == key }
                     val task = tasksById.getValue(session.taskId)
-                    val list = s.lists.firstOrNull { it.id == task.listId }?.name.orEmpty()
+                    val list = listName(s, task.listId).orEmpty()
                     val minutes = java.time.Duration.between(session.start, session.end).toMinutes()
                     val meta = listOf(num(session.start.hm(zone)), "${num(minutes)} ${tr("min")}", list).filter { it.isNotEmpty() }.joinToString(" · ") +
                         if (session.state == SessionState.NEEDS_REVIEW) " · ${tr("needsReview")}" else ""

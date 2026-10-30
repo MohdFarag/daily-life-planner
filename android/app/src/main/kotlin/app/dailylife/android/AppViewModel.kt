@@ -96,6 +96,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private fun id() = UUID.randomUUID().toString()
     private fun t(key: String, vararg a: Any) = app.dailylife.android.ui.translate(lang, key, *a)
 
+    /** Title for a capture with no text or file name, e.g. "Photo · 30 Oct, 00:07". */
+    private fun untitled(kind: CaptureKind): String {
+        val at = now().atZone(s.prayer.zone)
+        val time = app.dailylife.android.ui.localizeDigits(at.toLocalTime().withSecond(0).withNano(0).toString(), lang)
+        return "${t(app.dailylife.android.ui.kindKey(kind))} · ${app.dailylife.android.ui.shortDate(at.toLocalDate(), lang)}, $time"
+    }
+
     // Navigation ---------------------------------------------------------------------------
     val screen get() = stack.last()
     fun go(sc: Screen) { stack += sc }
@@ -120,7 +127,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 effectiveKind == CaptureKind.LINK -> runCatching { Uri.parse(url).host?.removePrefix("www.") }.getOrNull() ?: url!!
                 effectiveKind == CaptureKind.LIST -> entries.firstOrNull()?.text?.let { "$it…" } ?: firstLine
                 firstLine.isNotEmpty() -> firstLine.take(120)
-                else -> attachments.firstOrNull()?.let { java.io.File(it.localPath).name } ?: t("noteKind")
+                else -> attachments.firstOrNull()?.name ?: untitled(effectiveKind)
             }
             val body = when (effectiveKind) {
                 CaptureKind.LIST, CaptureKind.LINK -> ""

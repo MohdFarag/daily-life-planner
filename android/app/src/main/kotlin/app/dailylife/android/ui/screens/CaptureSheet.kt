@@ -59,6 +59,7 @@ import app.dailylife.android.data.AudioRecorder
 import app.dailylife.android.data.Media
 import app.dailylife.core.model.Attachment
 import app.dailylife.core.model.CaptureKind
+import app.dailylife.android.ui.attachmentLabel
 import app.dailylife.android.ui.Btn
 import app.dailylife.android.ui.BtnStyle
 import app.dailylife.android.ui.C
@@ -209,7 +210,7 @@ fun CaptureSheet(vm: AppViewModel) {
             }
             if (recording) Text(tr("recording", num(clock(elapsed))), style = T.micro, color = C.primary)
             if (micDenied) Text(tr("micDenied"), style = T.micro, color = C.warningText)
-            if (attachments.isNotEmpty()) Text(tr("attachments", attachments.size) + ": " + attachments.joinToString { File(it.localPath).name }, style = T.micro, color = C.primary)
+            if (attachments.isNotEmpty()) Text(tr("attachments", attachments.size) + ": " + attachments.joinToString { attachmentLabel(it, vm.lang) }, style = T.micro, color = C.primary)
 
             Box(Modifier.fillMaxWidth().heightIn(min = if (mode == Mode.TEXT || mode == Mode.LIST) 172.dp else 72.dp).card(R16).padding(16.dp)) {
                 if (text.isEmpty()) Text(

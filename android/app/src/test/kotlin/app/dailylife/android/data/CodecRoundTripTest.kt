@@ -14,7 +14,7 @@ class CodecRoundTripTest {
     @Test fun items() {
         val item = CaptureItem(
             "i1", CaptureKind.LIST, "Groceries", "body", "https://x.y", SourceRef("keep", null, null, "me"), CaptureState.WAITING, now,
-            listOf(Attachment("a", "/p/a.m4a", "audio/mp4", 10, 2000, UploadState.FAILED)),
+            listOf(Attachment("a", "/p/a.m4a", "audio/mp4", 10, 2000, UploadState.FAILED, "Voice memo.m4a"), Attachment("b", "/p/b.jpg", "image/jpeg", 5)),
             listOf(ListEntry("e0", "Milk", "task:t1"), ListEntry("e1", "Eggs")), "parent", listOf("t1"),
             WaitingFor("Client", null, d, d.plusDays(3)), d.plusDays(7), now, now, now.plusSeconds(60), CaptureState.INBOX,
         )
