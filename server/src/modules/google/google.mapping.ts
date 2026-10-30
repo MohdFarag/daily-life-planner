@@ -28,7 +28,7 @@ export function taskFromGoogle(
 ): Record<string, unknown> {
   const completed = g.status === "completed";
   const status = completed ? "COMPLETED" : current?.status === "IN_PROGRESS" ? "IN_PROGRESS" : "NEEDS_ACTION";
-  const keep = g.links?.find((l) => l.type === "keep_note" || l.link.startsWith("https://keep.google.com"));
+  const keep = g.links?.find((l) => l.type === "keep_note" || isKeepUrl(l.link));
   return {
     title: g.title ?? "",
     notes: g.notes ?? "",
@@ -41,6 +41,16 @@ export function taskFromGoogle(
     keepUrl: keep?.link ?? null,
     googleUrl: g.webViewLink ?? null,
   };
+}
+
+/** Whether [link] points at Google Keep itself (compared by host, so look-alike hosts don't pass). */
+export function isKeepUrl(link: string): boolean {
+  try {
+    const url = new URL(link);
+    return url.protocol === "https:" && url.hostname === "keep.google.com";
+  } catch {
+    return false;
+  }
 }
 
 /** A new local task for a task created in Google. */

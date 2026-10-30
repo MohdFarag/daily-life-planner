@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GoogleApiError, GoogleHttpApi } from "../src/modules/google/google.api.js";
-import { blockToEvent, eventFromGoogle, taskFromGoogle, taskToGoogle } from "../src/modules/google/google.mapping.js";
+import { blockToEvent, eventFromGoogle, isKeepUrl, taskFromGoogle, taskToGoogle } from "../src/modules/google/google.mapping.js";
 import { SecretBox } from "../src/shared/secret-box.js";
 
 describe("Google mapping", () => {
@@ -21,6 +21,13 @@ describe("Google mapping", () => {
       completedAt: "2026-10-30T10:00:00Z",
     });
     expect(taskToGoogle({ ...task, deadline: "2026-11-01" })).toEqual({ title: "Call", status: "needsAction" });
+  });
+
+  it("recognises Keep links by host only", () => {
+    expect(isKeepUrl("https://keep.google.com/#NOTE/abc")).toBe(true);
+    expect(isKeepUrl("https://keep.google.com.evil.example/x")).toBe(false);
+    expect(isKeepUrl("http://keep.google.com/x")).toBe(false);
+    expect(isKeepUrl("not a url")).toBe(false);
   });
 
   it("publishes guiding blocks as free and overnight blocks ending the next day (BLK03)", () => {
