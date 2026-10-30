@@ -6,6 +6,7 @@ import app.dailylife.core.model.PrayerName
 import app.dailylife.core.prayer.EndRule
 import app.dailylife.core.prayer.IqamaRule
 import app.dailylife.core.prayer.PrayerSettings
+import java.time.ZoneId
 
 /** Changes offered on the prayer settings screen (PRY02). Pure: each returns new settings. */
 object PrayerSettingsEdits {
@@ -26,6 +27,30 @@ object PrayerSettingsEdits {
                 madhab = current.madhab,
                 fridayExtraMin = current.fridayExtraMin,
             )
+
+    /**
+     * A place typed in by the user instead of a preset city (PRY02). Arabic-Indic digits and a
+     * decimal comma are accepted; returns null when a value is missing or out of range.
+     */
+    fun withLocation(
+        current: PrayerSettings,
+        latitude: String,
+        longitude: String,
+        zone: String,
+    ): PrayerSettings? {
+        val lat = coordinate(latitude)?.takeIf { it in -90.0..90.0 } ?: return null
+        val lng = coordinate(longitude)?.takeIf { it in -180.0..180.0 } ?: return null
+        val tz = runCatching { ZoneId.of(zone.trim()) }.getOrNull() ?: return null
+        return current.copy(latitude = lat, longitude = lng, zone = tz, label = "")
+    }
+
+    private fun coordinate(text: String): Double? =
+        text
+            .trim()
+            .map { c -> if (c in '٠'..'٩') '0' + (c - '٠') else c }
+            .joinToString("")
+            .replace(',', '.')
+            .toDoubleOrNull()
 
     fun iqamaMinutes(settings: PrayerSettings, prayer: PrayerName): Int =
         (settings.iqama[prayer] as? IqamaRule.AfterAdhan)?.minutes ?: DEFAULT_OFFSET

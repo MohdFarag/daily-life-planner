@@ -119,6 +119,8 @@ data class Task(
     /** The Keep note a Google task links to; shown, never copied into the inbox (TSK02). */
     val keepUrl: String? = null,
     val googleUrl: String? = null,
+    /** Where the task can be done, e.g. "home" or "phone" (ORG01). */
+    val context: String? = null,
 )
 
 data class TaskList(val id: String, val name: String)
@@ -214,4 +216,8 @@ data class CalendarEvent(
     val description: String? = null,
     /** Set once the event exists in Google (CAL01). */
     val googleId: String? = null,
+    /** Timed relative to a prayer on its date; re-timed when prayer times change (REL01). */
+    val rule: RelativeRule? = null,
+    /** The time block the event belongs to, without needing a task (CAL03). */
+    val blockId: String? = null,
 )

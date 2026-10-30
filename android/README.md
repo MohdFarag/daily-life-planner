@@ -34,8 +34,12 @@ CI (`.github/workflows/android.yml`) runs all of the above and uploads the debug
 | Tasks: lists, tags, importance, In Progress, estimate, deadline + early target (ORG01, PAR01 basics) | ✅ |
 | Sessions: several per task, fixed or prayer-relative ("starts after / starts before / ends before" adhan, iqama or end) (REL01) | ✅ |
 | Rolling 30-day window, idempotent recalculation, pinned exceptions, "Needs review" on conflicts (REL02–04) | ✅ daily WorkManager job + on settings change |
-| Prayer times: offline calculation (Adhan), city presets, method, Asr madhab, per-prayer adjustment, iqama, end of period, Friday extension, DST via IANA zone (PRY01–03) | ✅ coordinates entry beyond presets is not in the UI yet |
-| Time blocks: guiding vs protected, allowed lists, capacity counted once (BLK03–04) | ✅ |
+| Prayer times: offline calculation (Adhan), city presets, method, Asr madhab, per-prayer adjustment, iqama, end of period, Friday extension, DST via IANA zone (PRY01–03) | ✅ plus any place by latitude, longitude and time zone |
+| Time blocks: guiding vs protected, allowed lists, capacity counted once (BLK03–04) | ✅ changing a block's hours previews and moves its sessions first |
+| Subtasks and their order; triage can turn list entries into subtasks of one task (TSK03, TRI03) | ✅ |
+| Task context (at home, at the computer, phone, errands, outside) with a filter (ORG01) | ✅ |
+| Standalone events: fixed, all-day or relative to a prayer, optionally in a time block, in any writable calendar (CAL01, CAL03, REL01) | ✅ prayer-relative events are re-timed when prayer times change |
+| Drag a task from "Not planned" onto the day timeline to plan it at that time (PLN02) | ✅ the "Plan a session" button remains as the alternative to dragging |
 | Conflict checks and free-slot suggestions before saving; explicit override (PLN02, AC11) | ✅ |
 | Focus: pause, break, extend, overtime; time log of work vs break (DO01, TIM01) | ✅ |
 | Local session reminders and follow-up notifications (NOT02 fallback) | ✅ |

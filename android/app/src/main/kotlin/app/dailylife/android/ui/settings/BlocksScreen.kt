@@ -11,10 +11,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.dailylife.android.data.Snapshot
+import app.dailylife.android.domain.SessionMove
 import app.dailylife.android.ui.components.AppButton
 import app.dailylife.android.ui.components.ButtonStyle
 import app.dailylife.android.ui.components.Chip
@@ -26,6 +31,7 @@ import app.dailylife.android.ui.components.pickTime
 import app.dailylife.android.ui.format.blockLabel
 import app.dailylife.android.ui.format.listLabel
 import app.dailylife.android.ui.format.locale
+import app.dailylife.android.ui.format.range
 import app.dailylife.android.ui.i18n.LocalLang
 import app.dailylife.android.ui.i18n.num
 import app.dailylife.android.ui.i18n.tr
@@ -33,6 +39,7 @@ import app.dailylife.android.ui.theme.AppColors
 import app.dailylife.android.ui.theme.AppType
 import app.dailylife.android.viewmodel.AppViewModel
 import app.dailylife.core.model.BlockPolicy
+import app.dailylife.core.model.SessionState
 import app.dailylife.core.model.TaskList
 import app.dailylife.core.model.TimeBlock
 import java.time.DayOfWeek
@@ -40,13 +47,31 @@ import java.time.format.TextStyle
 
 @Composable
 fun BlocksScreen(vm: AppViewModel, s: Snapshot) {
+    // A new time for a block, waiting for the user to confirm how its sessions move (BLK04).
+    var pending by remember { mutableStateOf<Pair<TimeBlock, List<SessionMove>>?>(null) }
     ScreenColumn {
         TopBar(tr("timeBlocks"), { vm.navigator.back() })
+        pending?.let { (block, moves) ->
+            MovePreview(
+                s,
+                moves,
+                onApply = {
+                    vm.settings.moveBlock(block, moves)
+                    pending = null
+                },
+                onCancel = { pending = null },
+            )
+        }
         s.blocks.forEach { block ->
             BlockCard(
                 block,
                 s.lists,
                 onChange = vm.settings::saveBlock,
+                onRetime = { retimed ->
+                    val moves = vm.settings.previewBlockMove(retimed)
+                    if (moves.isEmpty()) vm.settings.saveBlock(retimed)
+                    else pending = retimed to moves
+                },
                 onDelete = { vm.settings.deleteBlock(block) },
             )
         }
@@ -61,6 +86,7 @@ private fun BlockCard(
     block: TimeBlock,
     lists: List<TaskList>,
     onChange: (TimeBlock) -> Unit,
+    onRetime: (TimeBlock) -> Unit,
     onDelete: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -79,14 +105,18 @@ private fun BlockCard(
             Chip(
                 "${tr("from")} ${num(block.start.toString())}",
                 false,
-                { pickTime(context, block.start) { onChange(block.copy(start = it)) } },
+                {
+                    pickTime(context, block.start) {
+                        if (it.isBefore(block.end)) onRetime(block.copy(start = it))
+                    }
+                },
             )
             Chip(
                 "${tr("to")} ${num(block.end.toString())}",
                 false,
                 {
                     pickTime(context, block.end) {
-                        if (it.isAfter(block.start)) onChange(block.copy(end = it))
+                        if (it.isAfter(block.start)) onRetime(block.copy(end = it))
                     }
                 },
             )
@@ -128,6 +158,34 @@ private fun BlockCard(
             color = AppColors.danger,
             modifier = Modifier.clickable(onClick = onDelete).padding(vertical = 8.dp),
         )
+    }
+}
+
+/** Lists how each linked session would move before the block's new time is applied. */
+@Composable
+private fun MovePreview(
+    s: Snapshot,
+    moves: List<SessionMove>,
+    onApply: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val zone = s.prayer.zone
+    val titles = s.tasks.associate { it.id to it.title }
+    Column(
+        Modifier.fillMaxWidth().card().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(tr("blockMoveTitle", moves.size), style = AppType.label)
+        moves.forEach { (before, after) ->
+            val review =
+                if (after.state == SessionState.NEEDS_REVIEW) " · ${tr("needsReview")}" else ""
+            Text(
+                "${titles[before.taskId].orEmpty()}: ${num(range(before.start, before.end, zone))} → ${num(range(after.start, after.end, zone))}$review",
+                style = AppType.small,
+            )
+        }
+        AppButton(tr("apply"), onApply)
+        AppButton(tr("cancel"), onCancel, style = ButtonStyle.QUIET)
     }
 }
 

@@ -52,6 +52,32 @@ class TriageTest {
     }
 
     @Test
+    fun `TRI03 entries can become ordered subtasks of one task named after the item`() {
+        val entries = Triage.textToEntries("- Book venue\n- Send invites") { "e$it" }
+        val list = item(kind = CaptureKind.LIST).copy(entries = entries)
+
+        val out =
+            Triage.resolveEntries(
+                list,
+                listOf("e0", "e1"),
+                emptyList(),
+                "work",
+                now,
+                asSubtasks = true,
+            )
+
+        val (parent, first, second) = out.newTasks
+        assertEquals(list.title, parent.title)
+        assertEquals(null, parent.parentId)
+        assertEquals(listOf(parent.id, parent.id), listOf(first.parentId, second.parentId))
+        assertEquals(listOf("Book venue", "Send invites"), listOf(first.title, second.title))
+        assertTrue(first.position!! < second.position!!)
+        assertEquals(out.newTasks.map { it.id }, out.item.derivedTaskIds)
+        assertEquals(out.newTasks.map { it.id }, out.undo.createdTaskIds)
+        assertEquals(CaptureState.PROCESSED, out.item.state)
+    }
+
+    @Test
     fun `AC04 Do Now never completes on its own`() {
         val started = Triage.startDoNow(item()).item
         assertEquals(CaptureState.DOING_NOW, started.state)

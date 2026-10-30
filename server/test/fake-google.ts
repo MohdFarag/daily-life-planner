@@ -63,6 +63,15 @@ export class FakeGoogle implements GoogleApi {
     this.writes.push(`deleteTask ${task.title ?? ""}`);
   }
 
+  async moveTask(listId: string, taskId: string, parent?: string, previous?: string) {
+    const task = this.task(listId, taskId);
+    task.parent = parent;
+    task.position = previous ? `${this.task(listId, previous).position ?? "0"}5` : "0";
+    this.stamp(task);
+    this.writes.push(`moveTask ${task.title ?? ""}`);
+    return { ...task };
+  }
+
   /** A change made by the user in Google (not through the API under test). */
   userEditsTask(listId: string, taskId: string, patch: Partial<GTask>) {
     this.stamp(Object.assign(this.task(listId, taskId), patch));

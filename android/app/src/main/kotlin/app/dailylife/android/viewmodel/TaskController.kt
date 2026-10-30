@@ -1,5 +1,7 @@
 package app.dailylife.android.viewmodel
 
+import app.dailylife.android.ui.collections.moveAmongSiblings
+import app.dailylife.core.inbox.Triage
 import app.dailylife.core.model.RelativeRule
 import app.dailylife.core.model.SessionState
 import app.dailylife.core.model.Task
@@ -18,6 +20,29 @@ class TaskController(private val ctx: ControllerScope, private val focus: FocusC
             ctx.repository.saveTask(
                 Task(id = ctx.newId(), title = title, listId = listId, createdAt = ctx.now())
             )
+        }
+
+    /** Adds a subtask at the end of [parent]'s subtasks (TSK03). */
+    fun addSubtask(parent: Task, title: String) =
+        ctx.scope.launch {
+            val siblings = ctx.snapshot.tasks.count { it.parentId == parent.id }
+            ctx.repository.saveTask(
+                Task(
+                    id = ctx.newId(),
+                    title = title,
+                    listId = parent.listId,
+                    parentId = parent.id,
+                    position = Triage.position(siblings),
+                    createdAt = ctx.now(),
+                )
+            )
+        }
+
+    /** Moves a subtask up (-1) or down (+1) among its siblings. */
+    fun moveSubtask(task: Task, delta: Int) =
+        ctx.scope.launch {
+            val siblings = ctx.snapshot.tasks.filter { it.parentId == task.parentId }
+            moveAmongSiblings(siblings, task.id, delta).forEach { ctx.repository.saveTask(it) }
         }
 
     /**

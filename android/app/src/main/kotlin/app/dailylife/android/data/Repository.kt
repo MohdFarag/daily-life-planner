@@ -342,8 +342,12 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
     private fun putDoc(table: Table, id: String, doc: JSONObject) =
         db.put(table, id, doc, extrasFor(table, doc))
 
-    /** A task and everything scheduled for it. */
+    /** A task, its subtasks (as in Google Tasks) and everything scheduled for them. */
     private fun removeTaskRows(taskId: String) {
+        db.all(Table.tasks)
+            .map(Codec::task)
+            .filter { it.parentId == taskId }
+            .forEach { removeTaskRows(it.id) }
         db.delete(Table.tasks, taskId)
         db.deleteWhere(Table.sessions, "task_id = ?", arrayOf(taskId))
         db.deleteWhere(Table.rules, "task_id = ?", arrayOf(taskId))

@@ -15,6 +15,7 @@ import app.dailylife.core.time.Interval
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 /** A session at a clock time, or relative to a prayer (REL01). */
@@ -61,21 +62,29 @@ data class ScheduleDraft(
         )
 
     companion object {
-        /** Starts from the session being edited, else the next quarter hour today. */
+        /**
+         * Starts from the session being edited, else a proposed start (a task dropped on the
+         * timeline), else the next quarter hour today.
+         */
         fun initial(
             task: Task,
             editing: TaskSession?,
             snapshot: Snapshot,
             today: LocalDate,
             now: Instant,
+            proposed: LocalDateTime? = null,
         ): ScheduleDraft {
             val zone = snapshot.prayer.zone
             val clock = now.atZone(zone).toLocalTime()
             val nextQuarter = LocalTime.of(clock.hour, 0).plusMinutes((clock.minute / 15 + 1) * 15L)
             return ScheduleDraft(
                 mode = ScheduleMode.FIXED,
-                date = editing?.start?.atZone(zone)?.toLocalDate() ?: today,
-                start = editing?.start?.atZone(zone)?.toLocalTime() ?: nextQuarter,
+                date =
+                    editing?.start?.atZone(zone)?.toLocalDate() ?: proposed?.toLocalDate() ?: today,
+                start =
+                    editing?.start?.atZone(zone)?.toLocalTime()
+                        ?: proposed?.toLocalTime()
+                        ?: nextQuarter,
                 minutes =
                     editing?.let { Duration.between(it.start, it.end).toMinutes().toInt() }
                         ?: task.estimateMin

@@ -71,6 +71,8 @@ export interface GoogleApi {
   insertTask(listId: string, task: Partial<GTask>, parent?: string): Promise<GTask>;
   patchTask(listId: string, taskId: string, task: Partial<GTask>): Promise<GTask>;
   deleteTask(listId: string, taskId: string): Promise<void>;
+  /** Moves a task under [parent] (top level when undefined), right after [previous] (first when undefined). */
+  moveTask(listId: string, taskId: string, parent?: string, previous?: string): Promise<GTask>;
 
   calendars(): Promise<GCalendar[]>;
   insertCalendar(summary: string, timeZone: string): Promise<GCalendar>;
@@ -136,6 +138,11 @@ export class GoogleHttpApi implements GoogleApi {
 
   async deleteTask(listId: string, taskId: string) {
     await this.call("DELETE", `${TASKS}/lists/${enc(listId)}/tasks/${enc(taskId)}`, undefined, [404, 410]);
+  }
+
+  moveTask(listId: string, taskId: string, parent?: string, previous?: string) {
+    const query = new URLSearchParams({ ...(parent ? { parent } : {}), ...(previous ? { previous } : {}) }).toString();
+    return this.call<GTask>("POST", `${TASKS}/lists/${enc(listId)}/tasks/${enc(taskId)}/move${query ? `?${query}` : ""}`);
   }
 
   calendars() {
