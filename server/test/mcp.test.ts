@@ -135,10 +135,12 @@ describe("MCP", () => {
 
     const plan = await call(client, "get_daily_plan", { date: "2026-11-02" });
     expect(plan.data.timeZone).toBe("Africa/Cairo");
-    expect(plan.data.sessions.map((s: { title: string }) => s.title)).toEqual(["Team sync", "Buy milk"]);
+    const sessions = plan.data.sessions as { title: string }[];
+    expect(sessions.map((s) => s.title)).toEqual(["Team sync", "Buy milk"]);
 
     expect((await call(client, "complete_task", { taskId: milk })).data.alreadyCompleted).toBe(false);
-    expect((await call(client, "list_tasks")).data.map((t: { title: string }) => t.title).sort()).toEqual(["Call plumber", "Team sync"]);
+    const open = (await call(client, "list_tasks")).data as { title: string }[];
+    expect(open.map((t) => t.title).sort()).toEqual(["Call plumber", "Team sync"]);
     expect((await call(client, "weekly_review")).data.overdue).toEqual([expect.objectContaining({ id: "meeting" })]);
 
     // Devices receive the records in the shape the app stores.
