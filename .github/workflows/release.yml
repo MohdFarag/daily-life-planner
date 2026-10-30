@@ -1,32 +1,82 @@
 name: Release
 
-# Push a tag like v0.1.0 to build a release APK and AAB and attach them to a GitHub release.
-# Signing uses repository secrets; without them the artifacts are built unsigned.
+# On every push to main, release-please updates a "chore(main): release x.y.z" PR with the next
+# version (from Conventional Commit titles) and the changelog. Merging that PR tags the release,
+# and the jobs below attach the Android APK/AAB and publish the server image to GHCR.
+# Pushing a tag by hand (v*) rebuilds the artifacts for that tag.
 on:
   push:
+    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release:
+  release-please:
+    name: Release PR
+    if: github.ref_type == 'branch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write # tags and releases
+      pull-requests: write # the release PR
+    outputs:
+      created: ${{ steps.rp.outputs.release_created }}
+      tag: ${{ steps.rp.outputs.tag_name }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  target:
+    name: Resolve release tag
+    needs: release-please
+    # Runs for a new release from release-please, or for a pushed tag (release-please is skipped then).
+    if: always() && (needs.release-please.outputs.created == 'true' || github.ref_type == 'tag')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - id: tag
+        env:
+          FROM_RP: ${{ needs.release-please.outputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: echo "tag=${FROM_RP:-$REF_NAME}" >> "$GITHUB_OUTPUT"
+
+  android:
+    name: Android APK and AAB
+    needs: target
+    if: always() && needs.target.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    environment: release # holds the signing secrets; can require approval
     permissions:
-      contents: write # create the GitHub release
+      contents: write # attach files to the release
     defaults:
       run:
         working-directory: android
         shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.target.outputs.tag }}
+          persist-credentials: false
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-disabled: true # release artifacts never come from a cache another run could have written
 
       - name: Decode keystore
         env:
@@ -45,20 +95,66 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: ${{ github.ref_type == 'tag' && github.ref_name || '0.0.0-dev' }}
-        run: ./gradlew -p core test :app:assembleRelease :app:bundleRelease --stacktrace
+          VERSION_NAME: ${{ needs.target.outputs.tag }}
+          SERVER_URL: ${{ vars.API_SERVER_URL }} # pre-filled on the sign-in screen
+        run: ./gradlew -p core test :app:assembleRelease :app:bundleRelease -PserverUrl="$SERVER_URL" --stacktrace
+
+      - name: Checksums
+        run: |
+          cd app/build/outputs
+          sha256sum apk/release/*.apk bundle/release/*.aab | sed 's|[^ ]*/||' > SHA256SUMS.txt
+          cat SHA256SUMS.txt
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: release-${{ github.ref_name }}
+          name: android-${{ needs.target.outputs.tag }}
           path: |
             android/app/build/outputs/apk/release/*.apk
             android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/SHA256SUMS.txt
 
-      - name: Create GitHub release
-        if: github.ref_type == 'tag'
+      - name: Attach to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.target.outputs.tag }}
         run: |
-          gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag \
-            app/build/outputs/apk/release/*.apk app/build/outputs/bundle/release/*.aab
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --generate-notes --verify-tag
+          gh release upload "$TAG" --clobber \
+            app/build/outputs/apk/release/*.apk app/build/outputs/bundle/release/*.aab app/build/outputs/SHA256SUMS.txt
+
+  server-image:
+    name: Server image (GHCR)
+    needs: target
+    if: always() && needs.target.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.target.outputs.tag }}
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}/server
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.target.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.target.outputs.tag }}
+            type=raw,value=latest
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: server
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max # build provenance and SBOM stored with the image
+          sbom: true

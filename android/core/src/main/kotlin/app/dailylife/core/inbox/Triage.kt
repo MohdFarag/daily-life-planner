@@ -20,7 +20,11 @@ data class TriageOutcome(
 )
 
 /** Restores the item and removes anything the decision created. */
-data class Undo(val previous: CaptureItem, val createdTaskIds: List<String>, val createdItemIds: List<String>)
+data class Undo(
+    val previous: CaptureItem,
+    val createdTaskIds: List<String>,
+    val createdItemIds: List<String>,
+)
 
 val TRASH_RETENTION: Duration = Duration.ofDays(30)
 
@@ -30,52 +34,101 @@ object Triage {
 
     /** Turns plain text into reviewable list entries (CAP04). */
     fun textToEntries(text: String, idFor: (Int) -> String): List<ListEntry> =
-        text.lines().map { it.replace(BULLET, "").trim() }.filter { it.isNotEmpty() }
+        text
+            .lines()
+            .map { it.replace(BULLET, "").trim() }
+            .filter { it.isNotEmpty() }
             .mapIndexed { i, line -> ListEntry(idFor(i), line) }
 
-    /** An incoming share matching an existing item by source identity, never by title (CAP05, GML01). */
+    /**
+     * An incoming share matching an existing item by source identity, never by title (CAP05,
+     * GML01).
+     */
     fun findDuplicate(items: List<CaptureItem>, source: SourceRef): CaptureItem? =
         if (source.externalId == null) null
-        else items.firstOrNull { it.source.service == source.service && it.source.externalId == source.externalId && it.source.account == source.account && it.state != CaptureState.TRASHED }
-
-    /** Do Now starts work but the item stays in the inbox until completion is confirmed (TRI02, AC04). */
-    fun startDoNow(item: CaptureItem) = TriageOutcome(item.copy(state = CaptureState.DOING_NOW), undo = Undo(item, emptyList(), emptyList()))
-
-    fun confirmDoNow(item: CaptureItem, now: Instant) =
-        TriageOutcome(item.copy(state = CaptureState.PROCESSED, completedAt = now), undo = Undo(item, emptyList(), emptyList()))
+        else
+            items.firstOrNull {
+                it.source.service == source.service &&
+                    it.source.externalId == source.externalId &&
+                    it.source.account == source.account &&
+                    it.state != CaptureState.TRASHED
+            }
 
     /**
-     * Converts an item into one or more tasks linked to the source (TRI03).
-     * Task ids are derived from the item id, so a retried conversion cannot create duplicates.
+     * Do Now starts work but the item stays in the inbox until completion is confirmed (TRI02,
+     * AC04).
      */
-    fun toTasks(item: CaptureItem, titles: List<String>, listId: String, now: Instant, estimateMin: Int? = null): TriageOutcome {
+    fun startDoNow(item: CaptureItem) =
+        TriageOutcome(
+            item.copy(state = CaptureState.DOING_NOW),
+            undo = Undo(item, emptyList(), emptyList()),
+        )
+
+    fun confirmDoNow(item: CaptureItem, now: Instant) =
+        TriageOutcome(
+            item.copy(state = CaptureState.PROCESSED, completedAt = now),
+            undo = Undo(item, emptyList(), emptyList()),
+        )
+
+    /**
+     * Converts an item into one or more tasks linked to the source (TRI03). Task ids are derived
+     * from the item id, so a retried conversion cannot create duplicates.
+     */
+    fun toTasks(
+        item: CaptureItem,
+        titles: List<String>,
+        listId: String,
+        now: Instant,
+        estimateMin: Int? = null,
+    ): TriageOutcome {
         require(titles.isNotEmpty()) { "At least one task title is required" }
         val tasks = titles.mapIndexed { i, title ->
             Task(
                 id = "${item.id}:task:${i + item.derivedTaskIds.size}",
                 title = title.trim(),
-                notes = if (titles.size == 1) item.body.takeIf { item.kind != CaptureKind.LIST } ?: "" else "",
+                notes =
+                    if (titles.size == 1) item.body.takeIf { item.kind != CaptureKind.LIST } ?: ""
+                    else "",
                 listId = listId,
                 estimateMin = estimateMin,
                 sourceItemId = item.id,
                 createdAt = now,
             )
         }
-        val updated = item.copy(state = CaptureState.PROCESSED, derivedTaskIds = item.derivedTaskIds + tasks.map { it.id })
-        return TriageOutcome(updated, newTasks = tasks, undo = Undo(item, tasks.map { it.id }, emptyList()))
+        val updated =
+            item.copy(
+                state = CaptureState.PROCESSED,
+                derivedTaskIds = item.derivedTaskIds + tasks.map { it.id },
+            )
+        return TriageOutcome(
+            updated,
+            newTasks = tasks,
+            undo = Undo(item, tasks.map { it.id }, emptyList()),
+        )
     }
 
     fun toReference(item: CaptureItem) = move(item, CaptureState.REFERENCE)
-    fun toSomeday(item: CaptureItem, reviewOn: LocalDate? = null) = move(item, CaptureState.SOMEDAY).let { it.copy(item = it.item.copy(reviewOn = reviewOn)) }
-    fun toWaiting(item: CaptureItem, waiting: WaitingFor) = move(item, CaptureState.WAITING).let { it.copy(item = it.item.copy(waiting = waiting)) }
 
-    private fun move(item: CaptureItem, to: CaptureState) = TriageOutcome(item.copy(state = to), undo = Undo(item, emptyList(), emptyList()))
+    fun toSomeday(item: CaptureItem, reviewOn: LocalDate? = null) =
+        move(item, CaptureState.SOMEDAY).let { it.copy(item = it.item.copy(reviewOn = reviewOn)) }
+
+    fun toWaiting(item: CaptureItem, waiting: WaitingFor) =
+        move(item, CaptureState.WAITING).let { it.copy(item = it.item.copy(waiting = waiting)) }
+
+    private fun move(item: CaptureItem, to: CaptureState) =
+        TriageOutcome(item.copy(state = to), undo = Undo(item, emptyList(), emptyList()))
 
     /**
-     * Splits selected parts of an item into linked inbox items (TRI07). Each part can then get its own
-     * decision. With list entries, the original becomes PROCESSED only once every entry is resolved.
+     * Splits selected parts of an item into linked inbox items (TRI07). Each part can then get its
+     * own decision. With list entries, the original becomes PROCESSED only once every entry is
+     * resolved.
      */
-    fun split(item: CaptureItem, parts: List<String>, now: Instant, entryIds: List<String> = emptyList()): TriageOutcome {
+    fun split(
+        item: CaptureItem,
+        parts: List<String>,
+        now: Instant,
+        entryIds: List<String> = emptyList(),
+    ): TriageOutcome {
         val children = parts.mapIndexed { i, text ->
             CaptureItem(
                 id = "${item.id}:part:${item.entries.count { it.resolvedAs != null } + i}",
@@ -87,61 +140,147 @@ object Triage {
                 parentId = item.id,
             )
         }
-        val entries = item.entries.map { e ->
-            val idx = entryIds.indexOf(e.id)
-            if (idx >= 0) e.copy(resolvedAs = "item:${children[idx].id}") else e
-        }
+        val entries =
+            item.entries.map { e ->
+                val idx = entryIds.indexOf(e.id)
+                if (idx >= 0) e.copy(resolvedAs = "item:${children[idx].id}") else e
+            }
         val allResolved = entries.isEmpty() || entries.all { it.resolvedAs != null }
-        val updated = item.copy(entries = entries, state = if (allResolved) CaptureState.PROCESSED else item.state)
-        return TriageOutcome(updated, newItems = children, undo = Undo(item, emptyList(), children.map { it.id }))
+        val updated =
+            item.copy(
+                entries = entries,
+                state = if (allResolved) CaptureState.PROCESSED else item.state,
+            )
+        return TriageOutcome(
+            updated,
+            newItems = children,
+            undo = Undo(item, emptyList(), children.map { it.id }),
+        )
     }
 
     /**
-     * Resolves individual list entries: some become tasks, some a reference (AC03).
-     * Unselected entries stay unprocessed and the item stays in the inbox until all are resolved.
+     * Resolves individual list entries: some become tasks, some a reference (AC03). Unselected
+     * entries stay unprocessed and the item stays in the inbox until all are resolved. With
+     * [asSubtasks], the tasks become ordered subtasks of one task named after the item (TRI03).
      */
-    fun resolveEntries(item: CaptureItem, taskEntryIds: List<String>, referenceEntryIds: List<String>, listId: String, now: Instant): TriageOutcome {
+    fun resolveEntries(
+        item: CaptureItem,
+        taskEntryIds: List<String>,
+        referenceEntryIds: List<String>,
+        listId: String,
+        now: Instant,
+        asSubtasks: Boolean = false,
+    ): TriageOutcome {
         val existingTasks = item.derivedTaskIds.size
-        val tasks = item.entries.filter { it.id in taskEntryIds }.mapIndexed { i, e ->
-            Task(id = "${item.id}:task:${existingTasks + i}", title = e.text, listId = listId, sourceItemId = item.id, createdAt = now)
+        val selected = item.entries.filter { it.id in taskEntryIds }
+        val parent =
+            if (asSubtasks && selected.isNotEmpty())
+                Task(
+                    id = "${item.id}:task:$existingTasks",
+                    title = item.title,
+                    listId = listId,
+                    sourceItemId = item.id,
+                    createdAt = now,
+                )
+            else null
+        val firstChild = existingTasks + if (parent != null) 1 else 0
+        val tasks = selected.mapIndexed { i, e ->
+            Task(
+                id = "${item.id}:task:${firstChild + i}",
+                title = e.text,
+                listId = listId,
+                sourceItemId = item.id,
+                createdAt = now,
+                parentId = parent?.id,
+                position = parent?.let { position(i) },
+            )
         }
-        val refs = item.entries.filter { it.id in referenceEntryIds }.map { e ->
-            CaptureItem(id = "${item.id}:ref:${e.id}", kind = CaptureKind.TEXT, title = e.text, source = item.source, state = CaptureState.REFERENCE, capturedAt = now, parentId = item.id)
-        }
-        val taskByEntry = item.entries.filter { it.id in taskEntryIds }.zip(tasks).associate { (e, t) -> e.id to t.id }
-        val entries = item.entries.map { e ->
-            when (e.id) {
-                in taskByEntry -> e.copy(resolvedAs = "task:${taskByEntry.getValue(e.id)}")
-                in referenceEntryIds -> e.copy(resolvedAs = "item:${item.id}:ref:${e.id}")
-                else -> e
+        val refs =
+            item.entries
+                .filter { it.id in referenceEntryIds }
+                .map { e ->
+                    CaptureItem(
+                        id = "${item.id}:ref:${e.id}",
+                        kind = CaptureKind.TEXT,
+                        title = e.text,
+                        source = item.source,
+                        state = CaptureState.REFERENCE,
+                        capturedAt = now,
+                        parentId = item.id,
+                    )
+                }
+        val taskByEntry =
+            item.entries
+                .filter { it.id in taskEntryIds }
+                .zip(tasks)
+                .associate { (e, t) -> e.id to t.id }
+        val entries =
+            item.entries.map { e ->
+                when (e.id) {
+                    in taskByEntry -> e.copy(resolvedAs = "task:${taskByEntry.getValue(e.id)}")
+                    in referenceEntryIds -> e.copy(resolvedAs = "item:${item.id}:ref:${e.id}")
+                    else -> e
+                }
             }
-        }
-        val updated = item.copy(
-            entries = entries,
-            derivedTaskIds = item.derivedTaskIds + tasks.map { it.id },
-            state = if (entries.all { it.resolvedAs != null }) CaptureState.PROCESSED else item.state,
+        val created = listOfNotNull(parent) + tasks
+        val updated =
+            item.copy(
+                entries = entries,
+                derivedTaskIds = item.derivedTaskIds + created.map { it.id },
+                state =
+                    if (entries.all { it.resolvedAs != null }) CaptureState.PROCESSED
+                    else item.state,
+            )
+        return TriageOutcome(
+            updated,
+            created,
+            refs,
+            Undo(item, created.map { it.id }, refs.map { it.id }),
         )
-        return TriageOutcome(updated, tasks, refs, Undo(item, tasks.map { it.id }, refs.map { it.id }))
     }
 
-    /** Moves an item to app trash with a visible purge date (DEL01). The external source is never touched. */
-    fun trash(item: CaptureItem, now: Instant) = TriageOutcome(
-        item.copy(state = CaptureState.TRASHED, trashedAt = now, purgeAt = now.plus(TRASH_RETENTION), stateBeforeTrash = item.state),
-        undo = Undo(item, emptyList(), emptyList()),
-    )
+    /** Sortable sibling order, in the same zero-padded form Google Tasks uses. */
+    fun position(index: Int): String = index.toString().padStart(20, '0')
+
+    /**
+     * Moves an item to app trash with a visible purge date (DEL01). The external source is never
+     * touched.
+     */
+    fun trash(item: CaptureItem, now: Instant) =
+        TriageOutcome(
+            item.copy(
+                state = CaptureState.TRASHED,
+                trashedAt = now,
+                purgeAt = now.plus(TRASH_RETENTION),
+                stateBeforeTrash = item.state,
+            ),
+            undo = Undo(item, emptyList(), emptyList()),
+        )
 
     fun restore(item: CaptureItem): CaptureItem {
         check(item.state == CaptureState.TRASHED) { "Item is not in trash" }
-        return item.copy(state = item.stateBeforeTrash ?: CaptureState.INBOX, trashedAt = null, purgeAt = null, stateBeforeTrash = null)
+        return item.copy(
+            state = item.stateBeforeTrash ?: CaptureState.INBOX,
+            trashedAt = null,
+            purgeAt = null,
+            stateBeforeTrash = null,
+        )
     }
 
     /** Trashed items whose retention has expired and may be permanently deleted. */
-    fun purgeDue(items: List<CaptureItem>, now: Instant) = items.filter { it.state == CaptureState.TRASHED && it.purgeAt != null && !now.isBefore(it.purgeAt) }
+    fun purgeDue(items: List<CaptureItem>, now: Instant) = items.filter {
+        it.state == CaptureState.TRASHED && it.purgeAt != null && !now.isBefore(it.purgeAt)
+    }
 
     /** Items due for a decision, oldest first, as shown in triage mode. */
-    fun queue(items: List<CaptureItem>) = items.filter { it.state == CaptureState.INBOX || it.state == CaptureState.DOING_NOW }.sortedBy { it.capturedAt }
+    fun queue(items: List<CaptureItem>) =
+        items
+            .filter { it.state == CaptureState.INBOX || it.state == CaptureState.DOING_NOW }
+            .sortedBy { it.capturedAt }
 
     /** Waiting-for items whose follow-up date has arrived (AC05). Nothing is sent to anyone. */
-    fun followUpsDue(items: List<CaptureItem>, today: LocalDate) =
-        items.filter { it.state == CaptureState.WAITING && it.waiting?.followUpOn?.let { d -> !d.isAfter(today) } == true }
+    fun followUpsDue(items: List<CaptureItem>, today: LocalDate) = items.filter {
+        it.state == CaptureState.WAITING &&
+            it.waiting?.followUpOn?.let { d -> !d.isAfter(today) } == true
+    }
 }

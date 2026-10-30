@@ -10,6 +10,7 @@ coroutines = "1.9.0"
 # 0.0.6+ is compiled for Java 21; 0.0.5 targets Java 17 like the rest of the app.
 adhan = "0.0.5"
 json = "20240303"
+ktfmt-plugin = "0.27.0"
 
 [libraries]
 # Included build (android/core), substituted by Gradle; no version needed.
@@ -36,3 +37,5 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+# Formatting with ktfmt in the official Kotlin style; CI runs ktfmtCheck.
+ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt-plugin" }

@@ -12,29 +12,39 @@ import { accountRoutes } from "./modules/account/account.routes.js";
 import { AccountService } from "./modules/account/account.service.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { AuthService } from "./modules/auth/auth.service.js";
+import { googleRoutes } from "./modules/google/google.routes.js";
+import { type GoogleDeps, GoogleService } from "./modules/google/google.service.js";
+import { mcpRoutes } from "./modules/mcp/mcp.routes.js";
+import { McpTokenService } from "./modules/mcp/mcp.service.js";
 import { mediaRoutes } from "./modules/media/media.routes.js";
 import { MediaService } from "./modules/media/media.service.js";
 import { LocalDiskStorage, type MediaStorage } from "./modules/media/storage.js";
+import { PlannerService } from "./modules/planner/planner.service.js";
 import { syncRoutes } from "./modules/sync/sync.routes.js";
 import { SyncService } from "./modules/sync/sync.service.js";
 import type { Config } from "./shared/config.js";
 import type { Db } from "./shared/db.js";
-import { ApiError } from "./shared/errors.js";
+import { tooManyRequests } from "./shared/errors.js";
 
 export interface AppDeps {
   config: Config;
   db: Db;
   storage?: MediaStorage;
   logger?: FastifyServerOptions["logger"];
+  /** Replaces Google with fakes in tests. */
+  google?: GoogleDeps;
 }
 
 /** Creates the services once; routes and jobs receive them explicitly. */
-export function createServices({ config, db, storage }: Pick<AppDeps, "config" | "db" | "storage">) {
+export function createServices({ config, db, storage, google: googleDeps }: Pick<AppDeps, "config" | "db" | "storage" | "google">) {
   const auth = new AuthService(db, config);
   const sync = new SyncService(db);
   const media = new MediaService(db, storage ?? new LocalDiskStorage(config.MEDIA_DIR), config);
-  const account = new AccountService(db, auth, media);
-  return { auth, sync, media, account };
+  const google = new GoogleService(db, sync, config, googleDeps);
+  const account = new AccountService(db, auth, sync, media, google);
+  const planner = new PlannerService(sync);
+  const mcpTokens = new McpTokenService(db);
+  return { auth, sync, media, account, planner, mcpTokens, google };
 }
 
 export type Services = ReturnType<typeof createServices>;
@@ -59,8 +69,7 @@ export async function buildApp(deps: AppDeps) {
   await app.register(rateLimit, {
     max: config.API_RATE_LIMIT_PER_MINUTE,
     timeWindow: "1 minute",
-    errorResponseBuilder: (_request, context) =>
-      new ApiError(429, "rate_limited", `Too many requests; retry in ${Math.ceil(context.ttl / 1000)} seconds`),
+    errorResponseBuilder: (_request, context) => tooManyRequests(`Too many requests; retry in ${Math.ceil(context.ttl / 1000)} seconds`),
   });
   await app.register(swagger, {
     openapi: {
@@ -72,12 +81,17 @@ export async function buildApp(deps: AppDeps) {
   await app.register(swaggerUi, { routePrefix: "/docs" });
 
   await app.register(healthRoutes(db));
-  await app.register(async (v1) => {
-    await v1.register(authRoutes(services.auth, config.AUTH_RATE_LIMIT_PER_MINUTE));
-    await v1.register(syncRoutes(services.sync));
-    await v1.register(mediaRoutes(services.media));
-    await v1.register(accountRoutes(services.account));
-  }, { prefix: "/v1" });
+  await app.register(
+    async (v1) => {
+      await v1.register(authRoutes(services.auth, config.AUTH_RATE_LIMIT_PER_MINUTE));
+      await v1.register(syncRoutes(services.sync));
+      await v1.register(mediaRoutes(services.media));
+      await v1.register(accountRoutes(services.account));
+      await v1.register(mcpRoutes(services.mcpTokens, services.planner));
+      await v1.register(googleRoutes(services.google, config.GOOGLE_APP_RETURN_URI));
+    },
+    { prefix: "/v1" },
+  );
 
   return { app, services };
 }

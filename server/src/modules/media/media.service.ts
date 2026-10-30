@@ -1,8 +1,8 @@
 import type { Readable } from "node:stream";
 import type { Config } from "../../shared/config.js";
 import { type Db, type Queryable, withTx } from "../../shared/db.js";
-import { ApiError, conflict, notFound } from "../../shared/errors.js";
-import { authRepository } from "../auth/auth.repository.js";
+import { badRequest, conflict, notFound, payloadTooLarge, unprocessable } from "../../shared/errors.js";
+import { usersRepository } from "../users/users.repository.js";
 import { type MediaRow, mediaRepository as repo } from "./media.repository.js";
 import { type MediaStorage, OffsetMismatch } from "./storage.js";
 
@@ -25,8 +25,14 @@ export interface NewUpload {
 }
 
 const toInfo = (m: MediaRow): MediaInfo => ({
-  id: m.id, filename: m.filename, mimeType: m.mimeType, sizeBytes: m.sizeBytes, sha256: m.sha256,
-  receivedBytes: m.receivedBytes, status: m.status, createdAt: m.createdAt.toISOString(),
+  id: m.id,
+  filename: m.filename,
+  mimeType: m.mimeType,
+  sizeBytes: m.sizeBytes,
+  sha256: m.sha256,
+  receivedBytes: m.receivedBytes,
+  status: m.status,
+  createdAt: m.createdAt.toISOString(),
 });
 
 const storageKey = (userId: string, id: string) => `${userId}/${id}`;
@@ -36,18 +42,26 @@ const storageKey = (userId: string, id: string) => `${userId}/${id}`;
  * offset the server reports, and the last chunk is verified before the upload counts as complete.
  */
 export class MediaService {
-  constructor(private readonly db: Db, private readonly storage: MediaStorage, private readonly config: Config) {}
+  constructor(
+    private readonly db: Db,
+    private readonly storage: MediaStorage,
+    private readonly config: Config,
+  ) {}
 
   async create(userId: string, upload: NewUpload): Promise<MediaInfo> {
     if (upload.sizeBytes > this.config.MAX_FILE_BYTES) {
-      throw new ApiError(413, "file_too_large", `Files are limited to ${this.config.MAX_FILE_BYTES} bytes`);
+      throw payloadTooLarge("file_too_large", `Files are limited to ${this.config.MAX_FILE_BYTES} bytes`);
     }
     return withTx(this.db, async (tx) => {
-      await authRepository.lockUser(tx, userId); // two concurrent uploads must not both pass the quota check
+      await usersRepository.lock(tx, userId); // two concurrent uploads must not both pass the quota check
       const used = await repo.usedBytes(tx, userId);
-      if (used + upload.sizeBytes > this.config.USER_QUOTA_BYTES) throw new ApiError(413, "quota_exceeded", "Storage quota exceeded");
+      if (used + upload.sizeBytes > this.config.USER_QUOTA_BYTES) throw payloadTooLarge("quota_exceeded", "Storage quota exceeded");
       const row = await repo.insert(tx, {
-        userId, filename: upload.filename ?? null, mimeType: upload.mimeType, sizeBytes: upload.sizeBytes, sha256: upload.sha256.toLowerCase(),
+        userId,
+        filename: upload.filename ?? null,
+        mimeType: upload.mimeType,
+        sizeBytes: upload.sizeBytes,
+        sha256: upload.sha256.toLowerCase(),
       });
       return toInfo(row);
     });
@@ -65,8 +79,8 @@ export class MediaService {
       const media = await repo.find(tx, userId, id, true);
       if (!media) throw notFound("Media");
       if (media.status === "complete") throw conflict("already_complete", "Upload is already complete");
-      if (offset !== media.receivedBytes) throw new ApiError(409, "offset_mismatch", `Expected offset ${media.receivedBytes}`);
-      if (offset + chunk.length > media.sizeBytes) throw new ApiError(400, "too_many_bytes", "Chunk exceeds the declared size");
+      if (offset !== media.receivedBytes) throw conflict("offset_mismatch", `Expected offset ${media.receivedBytes}`);
+      if (offset + chunk.length > media.sizeBytes) throw badRequest("too_many_bytes", "Chunk exceeds the declared size");
 
       const received = await this.writeChunk(media, offset, chunk);
       if (received === "reset") {
@@ -81,9 +95,9 @@ export class MediaService {
       }
       return repo.markComplete(tx, id, received);
     });
-    if (outcome === "reset") throw new ApiError(409, "offset_mismatch", "Upload state was reset; start again from offset 0");
+    if (outcome === "reset") throw conflict("offset_mismatch", "Upload state was reset; start again from offset 0");
     if (outcome === "checksum_mismatch") {
-      throw new ApiError(422, "checksum_mismatch", "Uploaded bytes do not match the declared SHA-256; upload again from offset 0");
+      throw unprocessable("checksum_mismatch", "Uploaded bytes do not match the declared SHA-256; upload again from offset 0");
     }
     return toInfo(outcome);
   }

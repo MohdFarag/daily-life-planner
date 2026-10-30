@@ -1,6 +1,17 @@
+# Normalise line endings in the repository; scripts must stay LF to run on CI.
 * text=auto eol=lf
 *.bat text eol=crlf
 gradlew text eol=lf
-*.jar binary
+
+# Binary files
 *.png binary
+*.jpg binary
 *.webp binary
+*.jar binary
+*.jks binary
+*.woff binary
+*.woff2 binary
+
+# Generated files: collapsed in diffs and excluded from language stats
+**/package-lock.json linguist-generated=true -diff
+CHANGELOG.md linguist-generated=true
