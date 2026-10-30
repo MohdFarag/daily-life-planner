@@ -17,11 +17,13 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.NightsStay
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.ViewTimeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,6 +89,10 @@ fun MoreScreen(vm: AppViewModel, s: Snapshot) {
             vm.navigator.open(Screen.Collections)
         }
         SectionLabel(tr("settings"))
+        val account = vm.account.account.collectAsState().value
+        NavRow(Icons.Outlined.Sync, tr("accountSync"), account?.email ?: tr("localOnly")) {
+            vm.navigator.open(Screen.Account)
+        }
         NavRow(Icons.Outlined.NightsStay, tr("prayerTimes"), cityLabel(s.prayer, s.lang)) {
             vm.navigator.open(Screen.PrayerSettings)
         }

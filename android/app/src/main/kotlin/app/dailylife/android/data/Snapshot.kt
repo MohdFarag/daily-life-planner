@@ -23,6 +23,18 @@ data class Prefs(
 /** A prayer-relative rule and the task whose sessions it generates. */
 data class RuleBinding(val taskId: String, val rule: RelativeRule)
 
+/** What has not reached the server yet: queued changes and those it rejected (SYN01). */
+data class SyncOutbox(
+    val queued: Set<String> = emptySet(),
+    val failures: List<OutboxEntry> = emptyList(),
+) {
+    fun isQueued(table: Db.Table, id: String) = SyncLedger.key(table, id) in queued
+
+    fun failure(table: Db.Table, id: String) = failures.firstOrNull {
+        it.table == table && it.id == id
+    }
+}
+
 /** Everything stored on the device, as one immutable value the UI renders from. */
 data class Snapshot(
     val items: List<CaptureItem> = emptyList(),
@@ -36,6 +48,7 @@ data class Snapshot(
     val prayer: PrayerSettings = defaultCity().settings(),
     val prefs: Prefs = Prefs(),
     val focus: FocusSession? = null,
+    val outbox: SyncOutbox = SyncOutbox(),
     val loaded: Boolean = false,
 ) {
     val lang: String

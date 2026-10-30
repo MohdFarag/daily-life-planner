@@ -7,6 +7,59 @@ val LocalLang = compositionLocalOf { "en" }
 
 private val S: Map<String, Pair<String, String>> =
     mapOf(
+        "accountSync" to ("Account & sync" to "الحساب والمزامنة"),
+        "syncIntro" to
+            ("Sign in to keep your inbox, tasks and plans in sync across your devices. Everything keeps working offline." to
+                "سجّل الدخول لمزامنة الوارد والمهام والخطط بين أجهزتك. كل شيء يعمل دون اتصال أيضًا."),
+        "signIn" to ("Sign in" to "تسجيل الدخول"),
+        "createAccount" to ("Create account" to "إنشاء حساب"),
+        "serverAddress" to ("Server address" to "عنوان الخادم"),
+        "email" to ("Email" to "البريد الإلكتروني"),
+        "password" to ("Password" to "كلمة المرور"),
+        "passwordHint" to ("At least 10 characters" to "10 أحرف على الأقل"),
+        "dataStaysNote" to
+            ("Data already on this phone stays here and is uploaded after you sign in." to
+                "تبقى البيانات الموجودة على هذا الهاتف وتُرفع بعد تسجيل الدخول."),
+        "syncState" to ("Sync" to "المزامنة"),
+        "syncNow" to ("Sync now" to "زامن الآن"),
+        "syncing" to ("Syncing…" to "جارٍ المزامنة…"),
+        "lastSynced" to ("Synced %1" to "تمت المزامنة %1"),
+        "notSyncedYet" to ("Not synced yet" to "لم تتم المزامنة بعد"),
+        "syncOffline" to
+            ("Offline — will sync when connected" to "غير متصل — ستتم المزامنة عند الاتصال"),
+        "syncFailed" to ("Last sync failed; it will retry" to "فشلت آخر مزامنة وستُعاد المحاولة"),
+        "signedOutError" to
+            ("Your session ended. Sign in again." to "انتهت جلستك. سجّل الدخول مجددًا."),
+        "pendingSync" to ("Waiting to sync" to "بانتظار المزامنة"),
+        "allSynced" to ("All synced" to "كل شيء متزامن"),
+        "needsAttention" to ("Needs your attention" to "يحتاج إلى انتباهك"),
+        "waitingToSync" to ("%1 waiting to sync" to "%1 بانتظار المزامنة"),
+        "discardChange" to ("Discard" to "تجاهل"),
+        "deletedElsewhere" to ("Deleted on another device" to "حُذف على جهاز آخر"),
+        "serverRejected" to ("Not accepted by the server: %1" to "لم يقبله الخادم: %1"),
+        "signOut" to ("Sign out" to "تسجيل الخروج"),
+        "signedIn" to ("Signed in" to "تم تسجيل الدخول"),
+        "deleteAccount" to ("Delete account" to "حذف الحساب"),
+        "deleteAccountExplain" to
+            ("This deletes your account and everything synced to the server, including uploaded files. Data on this phone stays until you remove the app. Nothing in Google is changed." to
+                "يحذف هذا حسابك وكل ما تمت مزامنته مع الخادم، بما في ذلك الملفات المرفوعة. تبقى البيانات على هذا الهاتف حتى تحذف التطبيق. لا يتغير شيء في Google."),
+        "deleteAccountConfirm" to ("Delete my account" to "احذف حسابي"),
+        "accountDeleted" to ("Account deleted" to "تم حذف الحساب"),
+        "passwordTooShort" to
+            ("Use a password of at least 10 characters" to "استخدم كلمة مرور من 10 أحرف على الأقل"),
+        "wrongCredentials" to
+            ("Email or password is incorrect" to "البريد الإلكتروني أو كلمة المرور غير صحيحة"),
+        "emailTaken" to
+            ("An account with this email already exists" to "يوجد حساب بهذا البريد الإلكتروني"),
+        "wrongPassword" to ("Password is incorrect" to "كلمة المرور غير صحيحة"),
+        "tooManyAttempts" to
+            ("Too many attempts; try again in a minute" to "محاولات كثيرة؛ حاول بعد دقيقة"),
+        "serverUnreachable" to
+            ("Can't reach the server. Check the address and your connection." to
+                "تعذّر الوصول إلى الخادم. تحقق من العنوان والاتصال."),
+        "invalidServer" to
+            ("Enter a valid https:// server address" to "أدخل عنوان خادم صالحًا يبدأ بـ https://"),
+        "serverError" to ("The server returned an error" to "أعاد الخادم خطأ"),
         "today" to ("Today" to "اليوم"),
         "inbox" to ("Inbox" to "الوارد"),
         "plan" to ("Plan" to "الخطة"),
@@ -54,7 +107,9 @@ private val S: Map<String, Pair<String, String>> =
                 "لكل شيء مكانه. التقط أي شيء بزر +."),
         "savedOnDevice" to
             ("Everything is saved on this device." to "كل شيء محفوظ على هذا الجهاز."),
-        "localOnly" to ("Sync is not connected yet" to "المزامنة غير متصلة بعد"),
+        "localOnly" to
+            ("On this device only — sign in to sync" to
+                "على هذا الجهاز فقط — سجّل الدخول للمزامنة"),
         "captureSomething" to ("Capture something" to "التقط فكرة"),
         "captureSubtitle" to
             ("Save now. Organize when you are ready." to "احفظ الآن ونظّم لاحقًا."),

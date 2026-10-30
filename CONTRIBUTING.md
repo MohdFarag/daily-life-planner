@@ -103,4 +103,5 @@ These are configured in the GitHub UI (Settings), not in files:
   deletion, and these status checks: `Core tests`, `App build, lint and tests`, `Title and branch name`,
   `Secret scan (gitleaks)`, `Workflow lint (actionlint, zizmor)`. Rulesets on private repositories are
   enforced only on GitHub Pro, Team or Enterprise.
+- **Secrets and variables → Actions → Variables:** `API_SERVER_URL`, the server address release builds pre-fill on the sign-in screen.
 - **Environments → release:** add the signing secrets; optionally require a reviewer before release builds.

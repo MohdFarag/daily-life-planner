@@ -41,12 +41,29 @@ CI (`.github/workflows/android.yml`) runs all of the above and uploads the debug
 | Local session reminders and follow-up notifications (NOT02 fallback) | ✅ |
 | Arabic UI and RTL | ✅ |
 | JSON export (SEC02) | ✅ |
+| Account: sign in or create one, sign out, delete account with password confirmation (UX03, SEC03) | ✅ More → Account & sync; tokens encrypted with an Android Keystore key |
+| Sync with the server: every local change goes to an outbox in the same transaction, is pushed with an idempotency key and merged field by field; changes from other devices are pulled after (SYN01, SYN04) | ✅ per-item state in the inbox (on this device / waiting / synced / needs attention); rejected changes can be discarded |
+| Media upload in resumable 1 MiB chunks with SHA-256, download on other devices; text never waits for media (CAP02) | ✅ failed uploads stay visible and keep the local copy |
 
 ## Not in this slice
 
-- Backend, account, server database and media upload (next slice: Node/TS + PostgreSQL)
 - Google Tasks / Calendar sync and Calendar reminders (NOT01) — needs Google Cloud OAuth setup
 - MCP server
 - Home-screen widget, location-based prayer settings, Drive / Gmail / YouTube (P1)
 
 The app font is the system font (Roboto / Noto Arabic); Manrope can be added as `res/font` TTF files.
+
+## Syncing with a server
+
+Run the backend from [`server/`](../server/README.md), then in the app open **More → Account & sync**.
+The server address must use HTTPS; plain HTTP is accepted only for `localhost`, `127.0.0.1` and the
+emulator's host `10.0.2.2` (development). Builds can pre-fill the address with `-PserverUrl=https://…`;
+the release workflow uses the `API_SERVER_URL` repository variable.
+
+`SyncEndToEndTest` drives the real client against a running server. It is skipped unless
+`SYNC_SERVER_URL` is set:
+
+```bash
+SYNC_SERVER_URL=http://127.0.0.1:8080 ./gradlew :app:testDebugUnitTest --tests '*SyncEndToEndTest*'
+```
+

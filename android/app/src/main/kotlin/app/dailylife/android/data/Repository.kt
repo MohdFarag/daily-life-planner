@@ -5,6 +5,7 @@ import app.dailylife.android.data.Db.Table
 import app.dailylife.core.focus.FocusSession
 import app.dailylife.core.inbox.TriageOutcome
 import app.dailylife.core.inbox.Undo
+import app.dailylife.core.model.Attachment
 import app.dailylife.core.model.CaptureItem
 import app.dailylife.core.model.Task
 import app.dailylife.core.model.TaskList
@@ -33,11 +34,15 @@ private object SettingKey {
  * transaction before the new [Snapshot] is published, so anything shown as saved survives process
  * death (CAP02, AC01). This class only stores data; rules live in core and in `domain/`.
  */
-class Repository(context: Context) {
+class Repository(context: Context) : SyncStore, AttachmentStore {
     private val db = Db(context)
+    private val ledger = SyncLedger(db)
     private val mutex = Mutex()
     private val _state = MutableStateFlow(Snapshot())
     val state: StateFlow<Snapshot> = _state.asStateFlow()
+
+    /** Called after each local change is stored, so a sync can be scheduled. */
+    var onLocalChange: (() -> Unit)? = null
 
     /** Loads stored data, seeding defaults on first launch. */
     suspend fun load() =
@@ -68,9 +73,7 @@ class Repository(context: Context) {
     /** Permanently deletes items and their local media (DEL03). */
     suspend fun purgeItems(ids: List<String>) = write {
         ids.forEach { id ->
-            db.get(Table.items, id)?.let(Codec::item)?.attachments?.forEach {
-                File(it.localPath).delete()
-            }
+            deleteMedia(id)
             db.delete(Table.items, id)
         }
     }
@@ -99,12 +102,7 @@ class Repository(context: Context) {
 
     /** Stores a rule together with the sessions it generated, in one transaction. */
     suspend fun saveRule(binding: RuleBinding, sessions: List<TaskSession>) = write {
-        db.put(
-            Table.rules,
-            binding.rule.id,
-            Codec.encode(binding),
-            mapOf("task_id" to binding.taskId),
-        )
+        putDoc(Table.rules, binding.rule.id, Codec.encode(binding))
         sessions.forEach(::putSession)
     }
 
@@ -134,10 +132,114 @@ class Repository(context: Context) {
         db.delete(Table.settings, SettingKey.FOCUS)
     }
 
+    // Sync (SYN01) -------------------------------------------------------------------------
+
+    override fun items(): List<CaptureItem> = state.value.items
+
+    /** Local changes to push, oldest first. */
+    override suspend fun outgoing(limit: Int): List<OutgoingChange> = locked {
+        ledger.pending(limit).map { entry ->
+            val doc =
+                if (entry.op == Db.OP_UPSERT) db.get(entry.table, entry.id)?.let(::forServer)
+                else null
+            OutgoingChange(entry, ledger.version(entry.table, entry.id), doc)
+        }
+    }
+
+    /** Records the server's answer to a pushed change. */
+    override suspend fun settle(change: OutgoingChange, outcome: PushOutcome) = remoteWrite {
+        val entry = change.entry
+        when (outcome) {
+            is PushOutcome.Saved -> {
+                ledger.settle(entry)
+                ledger.setVersion(entry.table, entry.id, outcome.version)
+                // Fields where the server kept a newer value: take them, unless edited again.
+                if (outcome.serverValues.isNotEmpty() && !ledger.isQueued(entry.table, entry.id)) {
+                    db.get(entry.table, entry.id)?.let { doc ->
+                        outcome.serverValues.forEach { (field, value) -> doc.put(field, value) }
+                        db.put(
+                            entry.table,
+                            entry.id,
+                            doc,
+                            extrasFor(entry.table, doc),
+                            record = false,
+                        )
+                    }
+                }
+            }
+            is PushOutcome.Rejected -> ledger.reject(entry, outcome.reason)
+        }
+    }
+
+    /**
+     * Applies changes from other devices. A record with an unsent local edit keeps the local
+     * version; the push that follows merges it field by field on the server.
+     */
+    override suspend fun applyRemote(changes: List<RemoteChange>) = remoteWrite {
+        changes.forEach { change ->
+            val table = Table.entries.firstOrNull { it.name == change.entity && it.synced }
+            if (table == null || ledger.isQueued(table, change.id)) return@forEach
+            if (change.deleted) {
+                if (table == Table.items) deleteMedia(change.id)
+                db.delete(table, change.id, record = false)
+            } else {
+                val doc =
+                    if (table == Table.items) keepLocalPaths(change.id, change.doc) else change.doc
+                db.put(table, change.id, doc, extrasFor(table, doc), record = false)
+            }
+            ledger.setVersion(table, change.id, change.version)
+        }
+    }
+
+    /** Gives up a change the server rejected; a record deleted elsewhere is removed here too. */
+    suspend fun discard(entry: OutboxEntry) = remoteWrite {
+        ledger.drop(entry.table, entry.id)
+        if (entry.error == REJECTED_DELETED) db.delete(entry.table, entry.id, record = false)
+    }
+
+    /** Before syncing with a different account: upload everything on this device as new. */
+    suspend fun restartSyncForNewAccount() = remoteWrite { ledger.restartForNewAccount() }
+
+    /**
+     * Updates one attachment from the stored item (not a possibly stale copy), so upload progress
+     * never overwrites an edit made meanwhile. Synced like any local change.
+     */
+    override suspend fun updateAttachment(
+        itemId: String,
+        attachmentId: String,
+        change: (Attachment) -> Attachment,
+    ) = write {
+        val item = db.get(Table.items, itemId)?.let(Codec::item) ?: return@write
+        putItem(
+            item.copy(
+                attachments = item.attachments.map { if (it.id == attachmentId) change(it) else it }
+            )
+        )
+    }
+
+    /** Points an attachment at its downloaded copy (a device-local detail, so not synced). */
+    override suspend fun setAttachmentPath(itemId: String, attachmentId: String, path: String) =
+        remoteWrite {
+            val item = db.get(Table.items, itemId)?.let(Codec::item) ?: return@remoteWrite
+            val attachments =
+                item.attachments.map {
+                    if (it.id == attachmentId) it.copy(localPath = path) else it
+                }
+            val doc = Codec.encode(item.copy(attachments = attachments))
+            db.put(Table.items, itemId, doc, extrasFor(Table.items, doc), record = false)
+        }
+
     // Internals ----------------------------------------------------------------------------
 
     /** Runs [block] in a transaction on the IO thread, then publishes the new snapshot. */
-    private suspend fun <T> write(block: () -> T): T =
+    private suspend fun <T> write(block: () -> T): T {
+        val result = remoteWrite(block)
+        onLocalChange?.invoke()
+        return result
+    }
+
+    /** Like [write], for changes that come from, or settle with, the server. */
+    private suspend fun <T> remoteWrite(block: () -> T): T =
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 val result = db.tx(block)
@@ -145,6 +247,50 @@ class Repository(context: Context) {
                 result
             }
         }
+
+    private suspend fun <T> locked(block: () -> T): T =
+        withContext(Dispatchers.IO) { mutex.withLock { block() } }
+
+    /** Indexed columns derived from a document, for local and remote writes alike. */
+    private fun extrasFor(table: Table, doc: JSONObject): Map<String, String> =
+        when (table) {
+            Table.items ->
+                mapOf(
+                    "state" to doc.getString("state"),
+                    "captured_at" to doc.getString("capturedAt"),
+                )
+            Table.sessions,
+            Table.rules -> mapOf("task_id" to doc.getString("taskId"))
+            else -> emptyMap()
+        }
+
+    /** File paths only mean something on this device, so they are not sent. */
+    private fun forServer(doc: JSONObject): JSONObject {
+        val out = JSONObject(doc.toString())
+        out.optJSONArray("attachments")?.let { list ->
+            for (i in 0 until list.length()) list.getJSONObject(i).remove("localPath")
+        }
+        return out
+    }
+
+    /** Keeps this device's file paths for attachments it already has. */
+    private fun keepLocalPaths(itemId: String, incoming: JSONObject): JSONObject {
+        val local = db.get(Table.items, itemId)?.let(Codec::item) ?: return incoming
+        val paths = local.attachments.associate { it.id to it.localPath }
+        incoming.optJSONArray("attachments")?.let { list ->
+            for (i in 0 until list.length()) {
+                val a = list.getJSONObject(i)
+                paths[a.optString("id")]?.let { a.put("localPath", it) }
+            }
+        }
+        return incoming
+    }
+
+    private fun deleteMedia(itemId: String) {
+        db.get(Table.items, itemId)?.let(Codec::item)?.attachments?.forEach {
+            if (it.localPath.isNotEmpty()) File(it.localPath).delete()
+        }
+    }
 
     private fun read(): Snapshot {
         val settings = db.all(Table.settings).associateBy { it.getString("_key") }
@@ -160,6 +306,7 @@ class Repository(context: Context) {
             prayer = settings[SettingKey.PRAYER]?.let(Codec::prayer) ?: defaultCity().settings(),
             prefs = settings[SettingKey.PREFS]?.let(Codec::prefs) ?: Prefs(),
             focus = settings[SettingKey.FOCUS]?.let(Codec::focus),
+            outbox = SyncOutbox(ledger.queuedKeys(), ledger.failures()),
             loaded = true,
         )
     }
@@ -171,23 +318,15 @@ class Repository(context: Context) {
         putSetting(SettingKey.PRAYER, Codec.encode(city.settings()))
     }
 
-    private fun putItem(item: CaptureItem) =
-        db.put(
-            Table.items,
-            item.id,
-            Codec.encode(item),
-            mapOf("state" to item.state.name, "captured_at" to item.capturedAt.toString()),
-        )
+    private fun putItem(item: CaptureItem) = putDoc(Table.items, item.id, Codec.encode(item))
 
-    private fun putTask(task: Task) = db.put(Table.tasks, task.id, Codec.encode(task))
+    private fun putTask(task: Task) = putDoc(Table.tasks, task.id, Codec.encode(task))
 
     private fun putSession(session: TaskSession) =
-        db.put(
-            Table.sessions,
-            session.id,
-            Codec.encode(session),
-            mapOf("task_id" to session.taskId),
-        )
+        putDoc(Table.sessions, session.id, Codec.encode(session))
+
+    private fun putDoc(table: Table, id: String, doc: JSONObject) =
+        db.put(table, id, doc, extrasFor(table, doc))
 
     /** A task and everything scheduled for it. */
     private fun removeTaskRows(taskId: String) {
@@ -198,4 +337,9 @@ class Repository(context: Context) {
 
     private fun putSetting(key: String, doc: JSONObject) =
         db.put(Table.settings, key, doc.put("_key", key))
+
+    companion object {
+        /** The server's reason when a change targets a record deleted on another device. */
+        const val REJECTED_DELETED = "deleted"
+    }
 }

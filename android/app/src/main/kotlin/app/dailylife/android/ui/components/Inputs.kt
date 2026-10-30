@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import app.dailylife.android.ui.theme.AppColors
 import app.dailylife.android.ui.theme.AppType
@@ -27,7 +31,13 @@ fun MenuRow(label: String, danger: Boolean = false, onClick: () -> Unit) {
 }
 
 @Composable
-fun Field(value: String, placeholder: String, minHeight: Int = 0, onChange: (String) -> Unit) {
+fun Field(
+    value: String,
+    placeholder: String,
+    minHeight: Int = 0,
+    secret: Boolean = false,
+    onChange: (String) -> Unit,
+) {
     androidx.compose.foundation.layout.Box(
         Modifier.fillMaxWidth()
             .heightIn(min = maxOf(minHeight, 48).dp)
@@ -40,6 +50,12 @@ fun Field(value: String, placeholder: String, minHeight: Int = 0, onChange: (Str
             value,
             onChange,
             textStyle = AppType.body,
+            singleLine = secret,
+            visualTransformation =
+                if (secret) PasswordVisualTransformation() else VisualTransformation.None,
+            keyboardOptions =
+                if (secret) KeyboardOptions(keyboardType = KeyboardType.Password)
+                else KeyboardOptions.Default,
             modifier = Modifier.fillMaxWidth(),
         )
     }

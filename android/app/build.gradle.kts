@@ -20,6 +20,10 @@ android {
         targetSdk = 35
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
         versionName = System.getenv("VERSION_NAME") ?: "0.1.0"
+        // Pre-filled on the sign-in screen; the user can change it. Set per build with
+        // -PserverUrl=https://... (for example in the release workflow).
+        val serverUrl = (project.findProperty("serverUrl") as String?).orEmpty()
+        buildConfigField("String", "DEFAULT_SERVER_URL", "\"$serverUrl\"")
     }
 
     signingConfigs {
@@ -49,7 +53,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
     testOptions { unitTests.all { it.useJUnitPlatform() } }
     lint {
         abortOnError = true

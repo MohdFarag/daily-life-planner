@@ -31,6 +31,8 @@ sealed interface Screen {
     data object Lists : Screen
 
     data object Preferences : Screen
+
+    data object Account : Screen
 }
 
 enum class Tab(val root: Screen) {

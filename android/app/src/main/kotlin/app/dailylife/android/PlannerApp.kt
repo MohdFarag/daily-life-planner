@@ -7,6 +7,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import app.dailylife.android.work.MaintenanceWorker
+import app.dailylife.android.work.SyncWorker
 import java.util.concurrent.TimeUnit
 
 class PlannerApp : Application() {
@@ -38,6 +39,7 @@ class PlannerApp : Application() {
                 ExistingPeriodicWorkPolicy.KEEP,
                 PeriodicWorkRequestBuilder<MaintenanceWorker>(12, TimeUnit.HOURS).build(),
             )
+        if (container.accounts.account.value != null) SyncWorker.schedulePeriodic(this)
     }
 
     companion object {
