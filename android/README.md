@@ -43,12 +43,12 @@ CI (`.github/workflows/android.yml`) runs all of the above and uploads the debug
 | JSON export (SEC02) | ✅ |
 | Account: sign in or create one, sign out, delete account with password confirmation (UX03, SEC03) | ✅ More → Account & sync; tokens encrypted with an Android Keystore key |
 | Sync with the server: every local change goes to an outbox in the same transaction, is pushed with an idempotency key and merged field by field; changes from other devices are pulled after (SYN01, SYN04) | ✅ per-item state in the inbox (on this device / waiting / synced / needs attention); rejected changes can be discarded |
+| Google Tasks & Calendar (server-side): connect from Account & sync; tasks both ways with Keep links; sessions published with a Google reminder and local reminders stopped for them; calendars to show and a default; appointments in the plan (TSK01–03, SES01, NOT01–02, CAL01–02, BLK01) | ✅ needs the server's Google configuration |
+| Assistant access (MCP): create, copy and revoke tokens for an AI assistant (MCP03) | ✅ |
 | Media upload in resumable 1 MiB chunks with SHA-256, download on other devices; text never waits for media (CAP02) | ✅ failed uploads stay visible and keep the local copy |
 
 ## Not in this slice
 
-- Google Tasks / Calendar sync and Calendar reminders (NOT01) — needs Google Cloud OAuth setup
-- MCP server
 - Home-screen widget, location-based prayer settings, Drive / Gmail / YouTube (P1)
 
 The app font is the system font (Roboto / Noto Arabic); Manrope can be added as `res/font` TTF files.

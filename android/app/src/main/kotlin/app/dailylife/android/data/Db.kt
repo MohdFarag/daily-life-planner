@@ -11,15 +11,13 @@ import org.json.JSONObject
  * Local database. Each entity is stored as a JSON document keyed by id, with indexed columns where
  * queries need them. Writes are synchronous and durable before a save is confirmed (CAP02).
  *
- * Every local write to a [Table.synced] table is also recorded in the outbox, in the same
- * transaction, so it reaches the server even if the app is closed before syncing (SYN01).
+ * Every local write is also recorded in the outbox, in the same transaction, so it reaches the
+ * server even if the app is closed before syncing (SYN01).
  */
 class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 2) {
 
-    /**
-     * Tables whose names match the server's entity names; [synced] ones are pushed to the server.
-     */
-    enum class Table(val sql: String, val synced: Boolean = true) {
+    /** Tables, named like the server's entities; all of them sync. */
+    enum class Table(val sql: String) {
         items(
             "CREATE TABLE items (id TEXT PRIMARY KEY, state TEXT NOT NULL, captured_at TEXT NOT NULL, doc TEXT NOT NULL)"
         ),
@@ -30,8 +28,8 @@ class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 2) {
         ),
         rules("CREATE TABLE rules (id TEXT PRIMARY KEY, task_id TEXT NOT NULL, doc TEXT NOT NULL)"),
         blocks("CREATE TABLE blocks (id TEXT PRIMARY KEY, doc TEXT NOT NULL)"),
-        // Calendar events come from Google, not from this device.
-        events("CREATE TABLE events (id TEXT PRIMARY KEY, doc TEXT NOT NULL)", synced = false),
+        // Calendar events: read from Google by the server, or created here and sent to Google.
+        events("CREATE TABLE events (id TEXT PRIMARY KEY, doc TEXT NOT NULL)"),
         settings("CREATE TABLE settings (id TEXT PRIMARY KEY, doc TEXT NOT NULL)"),
     }
 
@@ -50,15 +48,13 @@ class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 2) {
         if (oldVersion < 2) {
             createSyncTables(db)
             // Everything created before sync existed still has to reach the server.
-            Table.entries
-                .filter { it.synced }
-                .forEach { table ->
-                    db.execSQL(
-                        "INSERT INTO outbox (entity, id, op, mutation_id, seq) " +
-                            "SELECT '${table.name}', id, 'upsert', lower(hex(randomblob(16))), rowid " +
-                            "FROM ${table.name}"
-                    )
-                }
+            Table.entries.forEach { table ->
+                db.execSQL(
+                    "INSERT INTO outbox (entity, id, op, mutation_id, seq) " +
+                        "SELECT '${table.name}', id, 'upsert', lower(hex(randomblob(16))), rowid " +
+                        "FROM ${table.name}"
+                )
+            }
         }
     }
 
@@ -132,7 +128,6 @@ class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 2) {
     }
 
     private fun queue(table: Table, id: String, op: String) {
-        if (!table.synced) return
         writableDatabase.execSQL(
             "INSERT OR REPLACE INTO outbox (entity, id, op, mutation_id, seq, error) " +
                 "VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(seq), 0) + 1 FROM outbox), NULL)",

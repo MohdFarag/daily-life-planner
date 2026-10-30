@@ -70,15 +70,13 @@ internal class SyncLedger(private val db: Db) {
         val w = db.writableDatabase
         w.execSQL("DELETE FROM sync_meta")
         w.execSQL("DELETE FROM outbox")
-        Table.entries
-            .filter { it.synced }
-            .forEach { table ->
-                w.execSQL(
-                    "INSERT INTO outbox (entity, id, op, mutation_id, seq) " +
-                        "SELECT '${table.name}', id, '${Db.OP_UPSERT}', " +
-                        "lower(hex(randomblob(16))), rowid FROM ${table.name}"
-                )
-            }
+        Table.entries.forEach { table ->
+            w.execSQL(
+                "INSERT INTO outbox (entity, id, op, mutation_id, seq) " +
+                    "SELECT '${table.name}', id, '${Db.OP_UPSERT}', " +
+                    "lower(hex(randomblob(16))), rowid FROM ${table.name}"
+            )
+        }
     }
 
     private fun query(clause: String): List<OutboxEntry> {

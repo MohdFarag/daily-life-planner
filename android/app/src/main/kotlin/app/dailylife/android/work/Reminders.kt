@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit
 private const val REMINDER_TAG = "session-reminder"
 
 /**
- * Local reminders for sessions. Once Google Calendar sync exists, Calendar becomes the default
- * reminder source and these only cover sessions not yet published (NOT02).
+ * Local reminders for sessions. Google Calendar is the default reminder source: a session published
+ * there gets Google's reminder, so these only cover sessions not (yet) in Calendar (NOT02).
  */
 object Reminders {
     fun sync(context: Context, s: Snapshot, now: Instant = Instant.now()) {
@@ -26,6 +26,7 @@ object Reminders {
         s.sessions
             .filter {
                 it.state == SessionState.PLANNED &&
+                    it.googleEventId == null &&
                     it.taskId in open &&
                     it.start.isAfter(now) &&
                     it.start.isBefore(horizon)

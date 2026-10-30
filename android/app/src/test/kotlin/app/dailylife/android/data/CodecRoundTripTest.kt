@@ -123,4 +123,76 @@ class CodecRoundTripTest {
                 )
         assertEquals(p, Codec.prayer(Codec.encode(p)))
     }
+
+    @Test
+    fun googleFields() {
+        val task =
+            Task(
+                "t",
+                "Buy stamps",
+                listId = "personal",
+                createdAt = Instant.parse("2026-10-30T08:00:00Z"),
+                parentId = "p",
+                position = "00000000000000000001",
+                keepUrl = "https://keep.google.com/#NOTE/abc",
+                googleUrl = "https://tasks.google.com/task/x",
+            )
+        assertEquals(task, Codec.task(Codec.encode(task)))
+        val session =
+            TaskSession(
+                "s",
+                "t",
+                Instant.parse("2026-10-31T08:00:00Z"),
+                Instant.parse("2026-10-31T09:00:00Z"),
+                googleEventId = "ev1",
+            )
+        assertEquals(session, Codec.session(Codec.encode(session)))
+        val event =
+            CalendarEvent(
+                "e",
+                "Holiday",
+                Instant.parse("2026-12-24T22:00:00Z"),
+                Instant.parse("2026-12-25T22:00:00Z"),
+                "holidays",
+                readOnly = true,
+                allDay = true,
+                location = "Home",
+                description = "Day off",
+                googleId = "g1",
+            )
+        assertEquals(event, Codec.event(Codec.encode(event)))
+        val calendars =
+            app.dailylife.android.data.CalendarSettings(
+                listOf(
+                    app.dailylife.android.data.CalendarEntry(
+                        "c",
+                        "Work",
+                        false,
+                        "writer",
+                        true,
+                        null,
+                        "#0f0",
+                    )
+                ),
+                "c",
+            )
+        assertEquals(calendars, Codec.calendars(Codec.encode(calendars)))
+    }
+
+    @Test
+    fun serverNullsReadAsAbsent() {
+        val doc =
+            org.json
+                .JSONObject()
+                .put("id", "t")
+                .put("title", "From Google")
+                .put("listId", "personal")
+                .put("status", "NEEDS_ACTION")
+                .put("createdAt", "2026-10-30T08:00:00Z")
+                .put("parentId", org.json.JSONObject.NULL)
+                .put("keepUrl", org.json.JSONObject.NULL)
+        val task = Codec.task(doc)
+        assertEquals(null, task.parentId)
+        assertEquals(null, task.keepUrl)
+    }
 }

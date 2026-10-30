@@ -49,6 +49,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val tasks = TaskController(ctx, focus)
     val settings = SettingsController(ctx)
     val account = AccountController(ctx)
+    val google = GoogleController(ctx)
 
     init {
         viewModelScope.launch {

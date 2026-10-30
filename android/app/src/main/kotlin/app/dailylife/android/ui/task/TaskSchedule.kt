@@ -23,3 +23,14 @@ fun taskSchedule(s: Snapshot, taskId: String, now: Instant): TaskSchedule =
                 .sortedBy { it.start }
                 .take(SHOWN_SESSIONS),
     )
+
+/**
+ * A session's Google Calendar state (SES01): published, or waiting to be (the server retries), or
+ * null when Google is not connected.
+ */
+fun calendarNoteKey(session: TaskSession, googleConnected: Boolean): String? =
+    when {
+        !googleConnected -> null
+        session.googleEventId != null -> "inCalendar"
+        else -> "waitingForCalendar"
+    }

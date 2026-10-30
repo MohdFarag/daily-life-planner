@@ -38,6 +38,14 @@ class MainActivity : ComponentActivity() {
 
     private fun handle(intent: Intent?) {
         intent ?: return
+        // Back from Google's consent page in the browser.
+        intent.data
+            ?.takeIf { it.scheme == "dailylife" && it.host == "google-connected" }
+            ?.let {
+                vm.navigator.open(Screen.Account)
+                vm.google.returned(it.getQueryParameter("status"))
+                return
+            }
         intent.getStringExtra(LaunchExtras.OPEN_TASK)?.let {
             vm.navigator.open(Screen.TaskDetail(it))
         }

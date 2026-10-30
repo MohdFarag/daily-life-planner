@@ -186,4 +186,18 @@ class StateBuildersTest {
         assertEquals(listOf("soon", "late"), schedule.upcoming.map { it.id })
         assertEquals(listOf("next"), schedule.rules.map { it.taskId })
     }
+
+    @Test
+    fun `calendar note - only while Google is connected, published or waiting`() {
+        val s = session("x", "next", "10:00", "10:30")
+        assertEquals(
+            null,
+            app.dailylife.android.ui.task.calendarNoteKey(s, googleConnected = false),
+        )
+        assertEquals("waitingForCalendar", app.dailylife.android.ui.task.calendarNoteKey(s, true))
+        assertEquals(
+            "inCalendar",
+            app.dailylife.android.ui.task.calendarNoteKey(s.copy(googleEventId = "ev"), true),
+        )
+    }
 }

@@ -1,5 +1,7 @@
 package app.dailylife.android.ui.task
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.StickyNote2
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,7 +73,8 @@ fun TaskDetailScreen(vm: AppViewModel, s: Snapshot, id: String, fresh: Boolean) 
                 ?.let { source ->
                     SourceLink(source) { vm.navigator.open(Screen.Process(source.id)) }
                 }
-            SessionsCard(schedule, s.prayer.zone, vm, task)
+            task.keepUrl?.let { KeepLink(it) }
+            SessionsCard(schedule, s.prayer.zone, vm, task, googleConnected = s.calendars != null)
         }
         BottomActions(vm, s, task, fresh, hasSessions = schedule.upcoming.isNotEmpty())
     }
@@ -243,5 +247,22 @@ private fun BottomActions(
             schedule,
             style = ButtonStyle.SECONDARY,
         )
+    }
+}
+
+/** The Keep note a Google task came from; opened in Keep, not copied (TSK02). */
+@Composable
+private fun KeepLink(url: String) {
+    val context = LocalContext.current
+    Row(
+        Modifier.fillMaxWidth()
+            .card()
+            .clickable { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Outlined.StickyNote2, null, tint = AppColors.primary)
+        Text(tr("openInKeep"), style = AppType.label)
     }
 }

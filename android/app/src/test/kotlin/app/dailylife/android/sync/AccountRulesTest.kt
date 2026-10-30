@@ -7,8 +7,8 @@ import app.dailylife.android.data.SyncOutbox
 import app.dailylife.android.ui.inbox.SyncBadge
 import app.dailylife.android.ui.inbox.inboxSyncSummary
 import app.dailylife.android.ui.inbox.syncBadge
-import app.dailylife.android.viewmodel.AccountController
 import app.dailylife.android.viewmodel.AccountError
+import app.dailylife.android.viewmodel.ServerAction
 import app.dailylife.core.model.Attachment
 import app.dailylife.core.model.CaptureItem
 import app.dailylife.core.model.CaptureKind
@@ -32,7 +32,7 @@ class AccountRulesTest {
 
     @Test
     fun `server error codes map to translated messages`() {
-        fun err(code: String) = AccountController.errorFor(ApiException(400, code, "detail"))
+        fun err(code: String) = ServerAction.errorFor(ApiException(400, code, "detail"))
         assertEquals(AccountError("wrongCredentials"), err("unauthorized"))
         assertEquals(AccountError("emailTaken"), err("email_taken"))
         assertEquals(AccountError("serverError", "detail"), err("invalid_request"))

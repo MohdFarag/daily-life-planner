@@ -193,6 +193,10 @@ object Codec {
             .put("sourceItemId", t.sourceItemId)
             .put("createdAt", t.createdAt.toString())
             .put("completedAt", t.completedAt?.toString())
+            .put("parentId", t.parentId)
+            .put("position", t.position)
+            .put("keepUrl", t.keepUrl)
+            .put("googleUrl", t.googleUrl)
 
     fun task(o: JSONObject) =
         Task(
@@ -209,6 +213,10 @@ object Codec {
             sourceItemId = o.str("sourceItemId"),
             createdAt = Instant.parse(o.getString("createdAt")),
             completedAt = o.inst("completedAt"),
+            parentId = o.str("parentId"),
+            position = o.str("position"),
+            keepUrl = o.str("keepUrl"),
+            googleUrl = o.str("googleUrl"),
         )
 
     fun encode(l: TaskList): JSONObject = JSONObject().put("id", l.id).put("name", l.name)
@@ -252,6 +260,7 @@ object Codec {
             .put("pinned", s.pinned)
             .put("state", s.state.name)
             .put("blockId", s.blockId)
+            .put("googleEventId", s.googleEventId)
 
     fun session(o: JSONObject) =
         TaskSession(
@@ -265,6 +274,7 @@ object Codec {
             pinned = o.optBoolean("pinned"),
             state = SessionState.valueOf(o.getString("state")),
             blockId = o.str("blockId"),
+            googleEventId = o.str("googleEventId"),
         )
 
     fun encode(b: TimeBlock): JSONObject =
@@ -298,6 +308,10 @@ object Codec {
             .put("end", e.end.toString())
             .put("calendarId", e.calendarId)
             .put("readOnly", e.readOnly)
+            .put("allDay", e.allDay)
+            .put("location", e.location)
+            .put("description", e.description)
+            .put("googleId", e.googleId)
 
     fun event(o: JSONObject) =
         CalendarEvent(
@@ -307,6 +321,10 @@ object Codec {
             Instant.parse(o.getString("end")),
             o.getString("calendarId"),
             o.optBoolean("readOnly"),
+            o.optBoolean("allDay"),
+            o.str("location"),
+            o.str("description"),
+            o.str("googleId"),
         )
 
     // Rule bindings
@@ -315,6 +333,42 @@ object Codec {
 
     fun ruleBinding(o: JSONObject) =
         RuleBinding(o.getString("taskId"), rule(o.getJSONObject("rule")))
+
+    // Google calendars (written by the server; visibility and default chosen on the device)
+    fun encode(c: CalendarSettings): JSONObject =
+        JSONObject()
+            .put(
+                "list",
+                JSONArray(
+                    c.list.map {
+                        JSONObject()
+                            .put("id", it.id)
+                            .put("summary", it.summary)
+                            .put("primary", it.primary)
+                            .put("accessRole", it.accessRole)
+                            .put("visible", it.visible)
+                            .put("appRole", it.appRole)
+                            .put("color", it.color)
+                    }
+                ),
+            )
+            .put("defaultCalendarId", c.defaultCalendarId)
+
+    fun calendars(o: JSONObject) =
+        CalendarSettings(
+            o.optJSONArray("list").map {
+                CalendarEntry(
+                    it.getString("id"),
+                    it.optString("summary"),
+                    it.optBoolean("primary"),
+                    it.optString("accessRole"),
+                    it.optBoolean("visible"),
+                    it.str("appRole"),
+                    it.str("color"),
+                )
+            },
+            o.str("defaultCalendarId"),
+        )
 
     // Preferences
     fun encode(p: Prefs): JSONObject =
