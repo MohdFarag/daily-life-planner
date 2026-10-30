@@ -26,7 +26,20 @@ const Env = z.object({
     .positive()
     .default(15 * 60),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(60),
+  /** Google integration; disabled unless the client, redirect URI and secrets key are all set. */
+  GOOGLE_CLIENT_ID: z.string().default(""),
+  GOOGLE_CLIENT_SECRET: z.string().default(""),
+  /** Public URL of GET /v1/google/callback, registered in the Google Cloud console. */
+  GOOGLE_REDIRECT_URI: z.string().default(""),
+  /** Where the browser goes after connecting; the Android app handles this link. */
+  GOOGLE_APP_RETURN_URI: z.string().default("dailylife://google-connected"),
+  GOOGLE_SYNC_INTERVAL_SECONDS: z.coerce.number().int().positive().default(300),
+  /** 32 random bytes, base64: encrypts OAuth tokens at rest (SEC01). */
+  SECRETS_KEY: z.string().default(""),
 });
+
+/** Whether everything the Google integration needs is configured. */
+export const googleEnabled = (c: Config) => Boolean(c.GOOGLE_CLIENT_ID && c.GOOGLE_CLIENT_SECRET && c.GOOGLE_REDIRECT_URI && c.SECRETS_KEY);
 
 export type Config = z.infer<typeof Env>;
 

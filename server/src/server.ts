@@ -1,4 +1,5 @@
 import { buildApp } from "./app.js";
+import { GoogleSyncJob } from "./jobs/google-sync.js";
 import { RetentionJob } from "./jobs/retention.js";
 import { loadConfig } from "./shared/config.js";
 import { createPool, migrate } from "./shared/db.js";
@@ -18,9 +19,18 @@ const timer = setInterval(() => {
 }, HOUR);
 timer.unref();
 
+const googleSync = new GoogleSyncJob(services.google, app.log.child({ job: "google-sync" }));
+const googleTimer = setInterval(() => {
+  googleSync.run().catch((err: unknown) => {
+    app.log.error({ err }, "Google sync job failed");
+  });
+}, config.GOOGLE_SYNC_INTERVAL_SECONDS * 1000);
+googleTimer.unref();
+
 async function shutdown(signal: string) {
   app.log.info({ signal }, "shutting down");
   clearInterval(timer);
+  clearInterval(googleTimer);
   await app.close();
   await db.end();
   process.exit(0);

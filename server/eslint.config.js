@@ -104,6 +104,9 @@ export default defineConfig(
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
+      // Fakes implement async interfaces without awaiting anything.
+      "@typescript-eslint/require-await": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
     },
   },
 );

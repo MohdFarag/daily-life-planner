@@ -1,5 +1,6 @@
 import type { Db } from "../../shared/db.js";
 import type { AuthService, Principal } from "../auth/auth.service.js";
+import type { GoogleService } from "../google/google.service.js";
 import type { MediaService } from "../media/media.service.js";
 import type { SyncService } from "../sync/sync.service.js";
 import { usersRepository } from "../users/users.repository.js";
@@ -11,6 +12,7 @@ export class AccountService {
     private readonly auth: AuthService,
     private readonly sync: SyncService,
     private readonly media: MediaService,
+    private readonly google: GoogleService,
   ) {}
 
   /** Everything stored for the user in a documented, restorable format. Media bytes are listed, not embedded. */
@@ -33,6 +35,8 @@ export class AccountService {
   /** Deletes the account and all of its data after re-checking the password. */
   async delete(principal: Principal, password: string): Promise<void> {
     await this.auth.verifyCurrentPassword(principal, password);
+    // Revoke access at Google before its tokens are deleted (SEC03).
+    await this.google.disconnect(principal.userId);
     await this.media.removeAllBytesForUser(principal.userId);
     await usersRepository.delete(this.db, principal.userId); // cascades to sessions, records and media rows
   }

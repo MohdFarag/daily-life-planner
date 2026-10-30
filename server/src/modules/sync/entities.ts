@@ -20,6 +20,8 @@ const shapes = {
   sessions: { taskId: z.string().max(128), start: iso, end: iso, state: z.string().max(16) },
   rules: { taskId: z.string().max(128) },
   blocks: { name: z.string().max(200), start: z.string().max(8), end: z.string().max(8), policy: z.string().max(16) },
+  // Calendar events: read from Google, or created on a device and sent to Google (CAL01).
+  events: { title: z.string().max(2000), start: iso, end: iso, calendarId: z.string().max(1024) },
   settings: {},
   timeEntries: { taskId: z.string().max(128).nullable(), kind: z.string().max(16), start: iso, end: iso },
 } satisfies Record<string, z.ZodRawShape>;

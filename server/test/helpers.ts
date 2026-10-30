@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll } from "vitest";
-import { buildApp, type Services } from "../src/app.js";
+import { type AppDeps, buildApp, type Services } from "../src/app.js";
 import { loadConfig, type Config } from "../src/shared/config.js";
 import { createPool, type Db, migrate } from "../src/shared/db.js";
 
@@ -17,7 +17,7 @@ export interface TestContext {
 }
 
 /** Registers hooks giving the test file its own schema, media folder and app instance. */
-export function useTestApp(overrides: Partial<Record<keyof Config, string>> = {}): TestContext {
+export function useTestApp(overrides: Partial<Record<keyof Config, string>> = {}, deps: Pick<AppDeps, "google"> = {}): TestContext {
   const ctx = {} as TestContext;
   const schema = `test_${randomBytes(6).toString("hex")}`;
   let admin: Db;
@@ -36,7 +36,7 @@ export function useTestApp(overrides: Partial<Record<keyof Config, string>> = {}
     });
     ctx.db = createPool(TEST_DATABASE_URL, { options: `-c search_path=${schema}` });
     await migrate(ctx.db);
-    const built = await buildApp({ config: ctx.config, db: ctx.db, logger: false });
+    const built = await buildApp({ config: ctx.config, db: ctx.db, logger: false, ...deps });
     ctx.app = built.app;
     ctx.services = built.services;
     await ctx.app.ready();
