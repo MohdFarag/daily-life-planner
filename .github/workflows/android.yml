@@ -72,7 +72,7 @@ jobs:
       - run: echo "::add-matcher::${GITHUB_WORKSPACE}/.github/problem-matchers/kotlin.json"
 
       - name: Test
-        run: set -o pipefail; ./gradlew -p core test --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+        run: set -o pipefail; ./gradlew -p core test ktfmtCheck --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle.log"
 
       - name: Explain failure
         if: failure()
@@ -106,7 +106,7 @@ jobs:
       - name: Unit tests, lint and debug build
         run: |
           set -o pipefail
-          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+          ./gradlew :app:ktfmtCheck :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle.log"
 
       - name: Explain failure
         if: failure()

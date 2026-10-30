@@ -1,9 +1,13 @@
 plugins {
     `java-library`
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.ktfmt)
 }
 
+ktfmt { kotlinLangStyle() }
+
 group = "app.dailylife"
+
 version = "0.1.0"
 
 java {
@@ -11,9 +15,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-kotlin {
-    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
-}
+kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 
 dependencies {
     // Exposed in the public API (PrayerSettings uses CalculationMethod and Madhab).
@@ -21,6 +23,4 @@ dependencies {
     testImplementation(libs.kotlin.test)
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
+tasks.test { useJUnitPlatform() }
