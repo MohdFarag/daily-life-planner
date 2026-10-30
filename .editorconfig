@@ -18,3 +18,11 @@ ij_kotlin_allow_trailing_comma_on_call_site = true
 
 [*.bat]
 end_of_line = crlf
+
+[*.{ts,tsx,js,json,css,html}]
+# Matches .prettierrc.json.
+max_line_length = 140
+
+[*.md]
+# Two trailing spaces are a Markdown line break.
+trim_trailing_whitespace = false

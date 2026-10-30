@@ -4,6 +4,12 @@ updates:
     directories: ["/android", "/android/core"]
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7 # let new releases settle before adopting them
+    commit-message:
+      prefix: build
+      include: scope
+    labels: [dependencies, android]
     groups:
       androidx:
         patterns: ["androidx.*", "com.android.*"]
@@ -15,6 +21,12 @@ updates:
     directory: /server
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7 # let new releases settle before adopting them
+    commit-message:
+      prefix: build
+      include: scope
+    labels: [dependencies, server]
     groups:
       server:
         patterns: ["*"]
@@ -24,11 +36,23 @@ updates:
     directory: /server
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7 # let new releases settle before adopting them
+    commit-message:
+      prefix: build
+      include: scope
+    labels: [dependencies, server]
 
   - package-ecosystem: npm
     directory: /web
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7 # let new releases settle before adopting them
+    commit-message:
+      prefix: build
+      include: scope
+    labels: [dependencies, web]
     groups:
       web:
         patterns: ["*"]
@@ -38,6 +62,12 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7 # let new releases settle before adopting them
+    commit-message:
+      prefix: build
+      include: scope
+    labels: [dependencies, ci]
     groups:
       actions:
         patterns: ["*"]
