@@ -60,12 +60,15 @@ jobs:
       - name: actionlint
         run: '"$RUNNER_TEMP/actionlint" -color'
       - name: zizmor
-        run: pipx run zizmor==1.31.1 --offline --min-severity=medium .github/workflows
+        run: pipx run zizmor==1.31.1 --offline --min-severity=medium --format=github .github/workflows
 
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read # CodeQL reads the workflow run it belongs to
     strategy:
       fail-fast: false
       matrix:
