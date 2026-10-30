@@ -24,33 +24,36 @@ export interface MergeResult {
  * same field after the client's [baseVersion]; then the server value is kept and reported as a
  * conflict. Edits to different fields from different devices therefore both survive.
  */
-/** Keys that would reach Object.prototype if written by name. */
-const UNSAFE_FIELDS = new Set(["__proto__", "constructor", "prototype"]);
-
 export function mergeFields(
   stored: StoredRecord,
   incoming: Record<string, unknown>,
   baseVersion: number,
   nextVersion: number,
 ): MergeResult {
-  const doc = { ...stored.doc };
-  const fieldVersions = { ...stored.fieldVersions };
+  // Maps, not objects: field names come from the client, so writing them as object keys could
+  // reach Object.prototype ("__proto__").
+  const doc = new Map(Object.entries(stored.doc));
+  const fieldVersions = new Map(Object.entries(stored.fieldVersions));
   const conflicts: FieldConflict[] = [];
   let changed = false;
 
   for (const [field, value] of Object.entries(incoming)) {
-    if (UNSAFE_FIELDS.has(field)) continue;
-    if (isDeepStrictEqual(doc[field], value)) continue;
-    const serverVersion = fieldVersions[field] ?? 0;
+    if (isDeepStrictEqual(doc.get(field), value)) continue;
+    const serverVersion = fieldVersions.get(field) ?? 0;
     if (serverVersion > baseVersion) {
-      conflicts.push({ field, serverValue: doc[field] ?? null, serverVersion });
+      conflicts.push({ field, serverValue: doc.get(field) ?? null, serverVersion });
       continue;
     }
-    doc[field] = value;
-    fieldVersions[field] = nextVersion;
+    doc.set(field, value);
+    fieldVersions.set(field, nextVersion);
     changed = true;
   }
-  return { doc, fieldVersions, changed, conflicts };
+  return {
+    doc: Object.fromEntries(doc),
+    fieldVersions: Object.fromEntries(fieldVersions),
+    changed,
+    conflicts,
+  };
 }
 
 /** Field versions for a newly created record: every field starts at [version]. */
