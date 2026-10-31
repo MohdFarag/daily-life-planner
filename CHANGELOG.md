@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/MohdFarag/daily-life-planner/compare/v0.2.1...v0.2.2) (2026-10-31)
+
+
+### Bug Fixes
+
+* **release:** build the Android release correctly and keep the APK installable ([#27](https://github.com/MohdFarag/daily-life-planner/issues/27)) ([bdffc4a](https://github.com/MohdFarag/daily-life-planner/commit/bdffc4ad2e7bbf790859a49d48d9940ac5be7848))
+
 ## [0.2.1](https://github.com/MohdFarag/daily-life-planner/compare/v0.2.0...v0.2.1) (2026-10-31)
 
 
