@@ -67,9 +67,13 @@ internal class Http(private val baseUrl: String) {
             conn.setRequestProperty("Accept", "application/json")
             token?.let { conn.setRequestProperty("Authorization", "Bearer $it") }
             headers.forEach { (k, v) -> conn.setRequestProperty(k, v) }
-            when (body) {
-                is Body.Json -> send(conn, "application/json", body.value.toString().toByteArray())
-                is Body.Bytes -> send(conn, "application/octet-stream", body.value)
+            // Android's HttpURLConnection labels a body-less POST as a form, which the server
+            // rejects (415); such requests send an empty JSON object instead.
+            val payload = body ?: if (method in BODY_METHODS) Body.Json(JSONObject()) else null
+            when (payload) {
+                is Body.Json ->
+                    send(conn, "application/json", payload.value.toString().toByteArray())
+                is Body.Bytes -> send(conn, "application/octet-stream", payload.value)
                 null -> Unit
             }
             val status = conn.responseCode
@@ -99,5 +103,6 @@ internal class Http(private val baseUrl: String) {
 
     private companion object {
         const val TIMEOUT_MS = 30_000
+        val BODY_METHODS = setOf("POST", "PUT", "PATCH")
     }
 }
