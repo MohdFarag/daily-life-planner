@@ -97,7 +97,12 @@ jobs:
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: ${{ needs.target.outputs.tag }}
           SERVER_URL: ${{ vars.API_SERVER_URL }} # pre-filled on the sign-in screen
-        run: ./gradlew -p core test :app:assembleRelease :app:bundleRelease -PserverUrl="$SERVER_URL" --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew -p core test :app:assembleRelease :app:bundleRelease -PserverUrl="$SERVER_URL" --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+      - name: Explain failure
+        if: failure()
+        run: ../.github/scripts/gradle-failure-annotations.sh "$RUNNER_TEMP/gradle.log"
 
       - name: Checksums
         run: |
