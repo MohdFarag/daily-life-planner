@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.dailylife.android.data.Snapshot
 import app.dailylife.android.navigation.Screen
 import app.dailylife.android.ui.components.AppButton
@@ -52,7 +52,7 @@ fun InboxScreen(vm: AppViewModel, s: Snapshot) {
             "links" to items.filter { it.kind == CaptureKind.LINK },
             "media" to items.filter { it.kind in media },
         )
-    val signedIn = vm.account.account.collectAsState().value != null
+    val signedIn = vm.account.account.collectAsStateWithLifecycle().value != null
     val summary = inboxSyncSummary(items, s.outbox, signedIn)
 
     ScreenColumn {

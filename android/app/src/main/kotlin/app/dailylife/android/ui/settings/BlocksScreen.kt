@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,6 +29,7 @@ import app.dailylife.android.ui.components.Segmented
 import app.dailylife.android.ui.components.TopBar
 import app.dailylife.android.ui.components.card
 import app.dailylife.android.ui.components.pickTime
+import app.dailylife.android.ui.components.rememberDraft
 import app.dailylife.android.ui.format.blockLabel
 import app.dailylife.android.ui.format.listLabel
 import app.dailylife.android.ui.format.locale
@@ -95,9 +97,12 @@ private fun BlockCard(
         Modifier.fillMaxWidth().card().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        val latest by rememberUpdatedState(block)
+        var name by
+            rememberDraft(block.id, blockLabel(block, lang)) { onChange(latest.copy(name = it)) }
         BasicTextField(
-            blockLabel(block, lang),
-            { onChange(block.copy(name = it)) },
+            name,
+            { name = it },
             textStyle = AppType.body,
             modifier = Modifier.fillMaxWidth(),
         )

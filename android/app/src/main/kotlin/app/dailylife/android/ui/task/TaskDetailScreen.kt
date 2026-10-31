@@ -41,6 +41,7 @@ import app.dailylife.android.ui.components.TopBar
 import app.dailylife.android.ui.components.card
 import app.dailylife.android.ui.components.kindIcon
 import app.dailylife.android.ui.components.pickDate
+import app.dailylife.android.ui.components.rememberDraft
 import app.dailylife.android.ui.format.listName
 import app.dailylife.android.ui.format.shortDate
 import app.dailylife.android.ui.i18n.tr
@@ -65,7 +66,7 @@ fun TaskDetailScreen(vm: AppViewModel, s: Snapshot, id: String, fresh: Boolean) 
     Column(Modifier.fillMaxSize()) {
         ScreenColumn(Modifier.weight(1f), bottomPadding = 16.dp) {
             TaskTopBar(vm, task, fresh)
-            TitleAndNotes(task, save)
+            TitleAndNotes(task) { change -> vm.tasks.edit(task.id, change) }
             StatusBadges(task, save)
             DetailsCard(task, s, vm, save)
             s.items
@@ -99,19 +100,22 @@ private fun TaskTopBar(vm: AppViewModel, task: Task, fresh: Boolean) {
 }
 
 @Composable
-private fun TitleAndNotes(task: Task, save: (Task) -> Unit) {
+private fun TitleAndNotes(task: Task, edit: ((Task) -> Task) -> Unit) {
+    // Each field saves only itself, onto the stored task, so the two never overwrite each other.
+    var title by rememberDraft("${task.id}:title", task.title) { t -> edit { it.copy(title = t) } }
+    var notes by rememberDraft("${task.id}:notes", task.notes) { n -> edit { it.copy(notes = n) } }
     Column {
         BasicTextField(
-            task.title,
-            { save(task.copy(title = it)) },
+            title,
+            { title = it },
             textStyle = AppType.h1,
             modifier = Modifier.fillMaxWidth(),
         )
         Box {
-            if (task.notes.isEmpty()) Text(tr("notesHint"), style = AppType.small)
+            if (notes.isEmpty()) Text(tr("notesHint"), style = AppType.small)
             BasicTextField(
-                task.notes,
-                { save(task.copy(notes = it)) },
+                notes,
+                { notes = it },
                 textStyle = AppType.small,
                 modifier = Modifier.fillMaxWidth(),
             )

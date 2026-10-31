@@ -95,6 +95,11 @@ class AccountStore(context: Context) : SessionStore, CursorStore {
         _status.value = _status.value.copy(running = true)
     }
 
+    /** A run that was stopped before it ended: nothing synced, nothing failed. */
+    fun syncStopped() {
+        _status.value = _status.value.copy(running = false)
+    }
+
     fun syncFinished(error: String?) {
         val now = if (error == null) System.currentTimeMillis() else lastSyncedAt()
         if (error == null) prefs.edit { putLong(LAST_SYNC, now ?: 0) }

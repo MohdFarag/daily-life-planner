@@ -50,8 +50,7 @@ class FocusController(private val ctx: ControllerScope) {
             ?: task.estimateMin?.toLong()
             ?: DEFAULT_FOCUS_MINUTES
 
-    private fun update(change: (FocusSession) -> FocusSession) {
-        val focus = ctx.snapshot.focus ?: return
-        ctx.scope.launch { ctx.repository.saveFocus(change(focus)) }
-    }
+    /** Applies [change] to the stored session, so quick taps (pause, then resume) all count. */
+    private fun update(change: (FocusSession) -> FocusSession) =
+        ctx.scope.launch { ctx.repository.updateFocus(change) }
 }

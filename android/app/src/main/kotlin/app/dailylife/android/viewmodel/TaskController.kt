@@ -1,6 +1,6 @@
 package app.dailylife.android.viewmodel
 
-import app.dailylife.android.ui.collections.moveAmongSiblings
+import app.dailylife.android.domain.moveAmongSiblings
 import app.dailylife.core.inbox.Triage
 import app.dailylife.core.model.RelativeRule
 import app.dailylife.core.model.SessionState
@@ -14,6 +14,10 @@ import kotlinx.coroutines.launch
 class TaskController(private val ctx: ControllerScope, private val focus: FocusController) {
 
     fun save(task: Task) = ctx.scope.launch { ctx.repository.saveTask(task) }
+
+    /** Changes the stored task (not a possibly stale copy); use for edits that can overlap. */
+    fun edit(taskId: String, change: (Task) -> Task) =
+        ctx.scope.launch { ctx.repository.updateTask(taskId, change) }
 
     fun add(title: String, listId: String) =
         ctx.scope.launch {
@@ -61,11 +65,8 @@ class TaskController(private val ctx: ControllerScope, private val focus: FocusC
             if (completing && ctx.snapshot.focus?.taskId == task.id) focus.end()
         }
 
-    fun delete(task: Task) =
-        ctx.scope.launch {
-            ctx.repository.deleteTask(task.id)
-            ctx.navigator.back()
-        }
+    /** The task screen leaves by itself once the task is gone (also when deleted elsewhere). */
+    fun delete(task: Task) = ctx.scope.launch { ctx.repository.deleteTask(task.id) }
 
     // Sessions -----------------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 package app.dailylife.android.ui
 
-import app.dailylife.android.ui.collections.moveAmongSiblings
-import app.dailylife.android.ui.collections.taskTree
+import app.dailylife.android.domain.moveAmongSiblings
+import app.dailylife.android.domain.taskTree
 import app.dailylife.android.ui.task.TaskEdits
 import app.dailylife.core.model.Task
 import java.time.Instant

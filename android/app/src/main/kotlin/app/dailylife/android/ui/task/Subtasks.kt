@@ -17,8 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.dailylife.android.domain.siblingOrder
 import app.dailylife.android.navigation.Screen
-import app.dailylife.android.ui.collections.siblingOrder
 import app.dailylife.android.ui.components.AppButton
 import app.dailylife.android.ui.components.AppIconButton
 import app.dailylife.android.ui.components.Field
