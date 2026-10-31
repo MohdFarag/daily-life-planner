@@ -148,6 +148,9 @@ private val S: Map<String, Pair<String, String>> =
                 "تعذّر الوصول إلى الخادم. تحقق من العنوان والاتصال."),
         "invalidServer" to
             ("Enter a valid https:// server address" to "أدخل عنوان خادم صالحًا يبدأ بـ https://"),
+        "actionFailed" to
+            ("Something went wrong; your last change may not be saved" to
+                "حدث خطأ؛ ربما لم يُحفظ آخر تغيير"),
         "serverError" to ("The server returned an error" to "أعاد الخادم خطأ"),
         "today" to ("Today" to "اليوم"),
         "inbox" to ("Inbox" to "الوارد"),

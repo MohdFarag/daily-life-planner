@@ -1,4 +1,4 @@
-package app.dailylife.android.ui.collections
+package app.dailylife.android.domain
 
 import app.dailylife.core.inbox.Triage
 import app.dailylife.core.model.Task

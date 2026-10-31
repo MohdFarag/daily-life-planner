@@ -1,6 +1,7 @@
 package app.dailylife.android.data
 
 import android.content.Context
+import android.util.Log
 import app.dailylife.android.data.Db.Table
 import app.dailylife.core.focus.FocusSession
 import app.dailylife.core.inbox.TriageOutcome
@@ -51,7 +52,8 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 if (db.all(Table.lists).isEmpty()) seedDefaults()
-                _state.value = read()
+                db.takeChanged()
+                _state.value = read(Snapshot(), Table.entries.toSet())
             }
         }
 
@@ -83,6 +85,14 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
     // Tasks, lists, blocks -----------------------------------------------------------------
 
     suspend fun saveTask(task: Task) = write { putTask(task) }
+
+    /**
+     * Changes a task starting from its stored value, so edits made close together (two fields, or a
+     * field and a sync) never overwrite each other.
+     */
+    suspend fun updateTask(id: String, change: (Task) -> Task) = write {
+        db.get(Table.tasks, id)?.let(Codec::task)?.let { putTask(change(it)) }
+    }
 
     suspend fun deleteTask(id: String) = write { removeTaskRows(id) }
 
@@ -138,9 +148,16 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
         putSetting(SettingKey.FOCUS, Codec.encode(focus))
     }
 
+    /** Changes the running focus session, if any, starting from its stored value. */
+    suspend fun updateFocus(change: (FocusSession) -> FocusSession) = write {
+        db.get(Table.settings, SettingKey.FOCUS)?.let(Codec::focus)?.let {
+            putSetting(SettingKey.FOCUS, Codec.encode(change(it)))
+        }
+    }
+
     /** Clears the running focus session and appends its intervals to the time log (TIM01). */
     suspend fun finishFocus(ended: FocusSession) = write {
-        val log = read().timeLog + ended.entries
+        val log = _state.value.timeLog + ended.entries
         putSetting(SettingKey.TIME_LOG, JSONObject().put("entries", Codec.encode(log)))
         db.delete(Table.settings, SettingKey.FOCUS)
     }
@@ -160,7 +177,7 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
     }
 
     /** Records the server's answer to a pushed change. */
-    override suspend fun settle(change: OutgoingChange, outcome: PushOutcome) = remoteWrite {
+    override suspend fun settle(change: OutgoingChange, outcome: PushOutcome) = commit {
         val entry = change.entry
         when (outcome) {
             is PushOutcome.Saved -> {
@@ -188,7 +205,7 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
      * Applies changes from other devices. A record with an unsent local edit keeps the local
      * version; the push that follows merges it field by field on the server.
      */
-    override suspend fun applyRemote(changes: List<RemoteChange>) = remoteWrite {
+    override suspend fun applyRemote(changes: List<RemoteChange>) = commit {
         changes.forEach { change ->
             val table = Table.entries.firstOrNull { it.name == change.entity }
             if (table == null || ledger.isQueued(table, change.id)) return@forEach
@@ -205,24 +222,25 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
     }
 
     /** Gives up a change the server rejected; a record deleted elsewhere is removed here too. */
-    suspend fun discard(entry: OutboxEntry) = remoteWrite {
+    suspend fun discard(entry: OutboxEntry) = commit {
         ledger.drop(entry.table, entry.id)
         if (entry.error == REJECTED_DELETED) db.delete(entry.table, entry.id, record = false)
     }
 
     /** Before syncing with a different account: upload everything on this device as new. */
-    suspend fun restartSyncForNewAccount() = remoteWrite { ledger.restartForNewAccount() }
+    suspend fun restartSyncForNewAccount() = commit { ledger.restartForNewAccount() }
 
     /**
      * Updates one attachment from the stored item (not a possibly stale copy), so upload progress
-     * never overwrites an edit made meanwhile. Synced like any local change.
+     * never overwrites an edit made meanwhile. Queued like any local change, but sent by the sync
+     * that is uploading it, so it does not ask for (and restart) another one.
      */
     override suspend fun updateAttachment(
         itemId: String,
         attachmentId: String,
         change: (Attachment) -> Attachment,
-    ) = write {
-        val item = db.get(Table.items, itemId)?.let(Codec::item) ?: return@write
+    ) = commit {
+        val item = db.get(Table.items, itemId)?.let(Codec::item) ?: return@commit
         putItem(
             item.copy(
                 attachments = item.attachments.map { if (it.id == attachmentId) change(it) else it }
@@ -232,8 +250,8 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
 
     /** Points an attachment at its downloaded copy (a device-local detail, so not synced). */
     override suspend fun setAttachmentPath(itemId: String, attachmentId: String, path: String) =
-        remoteWrite {
-            val item = db.get(Table.items, itemId)?.let(Codec::item) ?: return@remoteWrite
+        commit {
+            val item = db.get(Table.items, itemId)?.let(Codec::item) ?: return@commit
             val attachments =
                 item.attachments.map {
                     if (it.id == attachmentId) it.copy(localPath = path) else it
@@ -244,19 +262,25 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
 
     // Internals ----------------------------------------------------------------------------
 
-    /** Runs [block] in a transaction on the IO thread, then publishes the new snapshot. */
+    /**
+     * Runs [block] in a transaction on the IO thread, then publishes the new snapshot (re-reading
+     * only the tables it wrote).
+     */
     private suspend fun <T> write(block: () -> T): T {
-        val result = remoteWrite(block)
+        val result = commit(block)
         onLocalChange?.invoke()
         return result
     }
 
-    /** Like [write], for changes that come from, or settle with, the server. */
-    private suspend fun <T> remoteWrite(block: () -> T): T =
+    /**
+     * Like [write], without asking for a sync: for changes that come from, or settle with, the
+     * server, and for those a running sync sends itself.
+     */
+    private suspend fun <T> commit(block: () -> T): T =
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 val result = db.tx(block)
-                _state.value = read()
+                _state.value = read(_state.value, db.takeChanged())
                 result
             }
         }
@@ -305,25 +329,51 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
         }
     }
 
-    private fun read(): Snapshot {
-        val settings = db.all(Table.settings).associateBy { it.getString("_key") }
-        return Snapshot(
-            items = db.all(Table.items).map(Codec::item),
-            tasks = db.all(Table.tasks).map(Codec::task),
-            lists = db.all(Table.lists).map(Codec::list),
-            sessions = db.all(Table.sessions).map(Codec::session),
-            rules = db.all(Table.rules).map(Codec::ruleBinding),
-            blocks = db.all(Table.blocks).map(Codec::block),
-            events = db.all(Table.events).map(Codec::event),
-            timeLog = Codec.timeEntries(settings[SettingKey.TIME_LOG]?.optJSONArray("entries")),
-            prayer = settings[SettingKey.PRAYER]?.let(Codec::prayer) ?: defaultCity().settings(),
-            prefs = settings[SettingKey.PREFS]?.let(Codec::prefs) ?: Prefs(),
-            focus = settings[SettingKey.FOCUS]?.let(Codec::focus),
-            calendars = settings[SettingKey.CALENDARS]?.let(Codec::calendars),
-            outbox = SyncOutbox(ledger.queuedKeys(), ledger.failures()),
-            loaded = true,
-        )
+    /** [base] with [tables] re-read from storage; the outbox is always re-read. */
+    private fun read(base: Snapshot, tables: Set<Table>): Snapshot {
+        var s = base
+        if (Table.items in tables) s = s.copy(items = decodeAll(Table.items, Codec::item))
+        if (Table.tasks in tables) s = s.copy(tasks = decodeAll(Table.tasks, Codec::task))
+        if (Table.lists in tables) s = s.copy(lists = decodeAll(Table.lists, Codec::list))
+        if (Table.sessions in tables)
+            s = s.copy(sessions = decodeAll(Table.sessions, Codec::session))
+        if (Table.rules in tables) s = s.copy(rules = decodeAll(Table.rules, Codec::ruleBinding))
+        if (Table.blocks in tables) s = s.copy(blocks = decodeAll(Table.blocks, Codec::block))
+        if (Table.events in tables) s = s.copy(events = decodeAll(Table.events, Codec::event))
+        if (Table.settings in tables) {
+            val settings = db.all(Table.settings).associateBy { it.getString("_key") }
+            fun <T> setting(key: String, decode: (JSONObject) -> T): T? =
+                settings[key]?.let { decodeOrNull(Table.settings, it, decode) }
+            s =
+                s.copy(
+                    timeLog =
+                        setting(SettingKey.TIME_LOG) {
+                                Codec.timeEntries(it.optJSONArray("entries"))
+                            }
+                            .orEmpty(),
+                    prayer = setting(SettingKey.PRAYER, Codec::prayer) ?: defaultCity().settings(),
+                    prefs = setting(SettingKey.PREFS, Codec::prefs) ?: Prefs(),
+                    focus = setting(SettingKey.FOCUS, Codec::focus),
+                    calendars = setting(SettingKey.CALENDARS, Codec::calendars),
+                )
+        }
+        return s.copy(outbox = SyncOutbox(ledger.queuedKeys(), ledger.failures()), loaded = true)
     }
+
+    /**
+     * Decodes each row on its own: a row that cannot be read (damaged, or written by a newer app
+     * version) is skipped and logged, instead of making every read, and so the whole app, fail.
+     */
+    private fun <T> decodeAll(table: Table, decode: (JSONObject) -> T): List<T> =
+        db.all(table).mapNotNull { decodeOrNull(table, it, decode) }
+
+    private fun <T> decodeOrNull(table: Table, doc: JSONObject, decode: (JSONObject) -> T): T? =
+        try {
+            decode(doc)
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Skipping unreadable ${table.name} row ${doc.optString("id")}", e)
+            null
+        }
 
     private fun seedDefaults() = db.tx {
         val city = defaultCity()
@@ -344,8 +394,7 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
 
     /** A task, its subtasks (as in Google Tasks) and everything scheduled for them. */
     private fun removeTaskRows(taskId: String) {
-        db.all(Table.tasks)
-            .map(Codec::task)
+        decodeAll(Table.tasks, Codec::task)
             .filter { it.parentId == taskId }
             .forEach { removeTaskRows(it.id) }
         db.delete(Table.tasks, taskId)
@@ -357,6 +406,8 @@ class Repository(context: Context) : SyncStore, AttachmentStore {
         db.put(Table.settings, key, doc.put("_key", key))
 
     companion object {
+        private const val TAG = "Repository"
+
         /** The server's reason when a change targets a record deleted on another device. */
         const val REJECTED_DELETED = "deleted"
     }

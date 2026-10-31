@@ -23,7 +23,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +33,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.dailylife.android.data.Snapshot
 import app.dailylife.android.navigation.Screen
 import app.dailylife.android.navigation.isTabRoot
@@ -75,7 +75,7 @@ private const val MESSAGE_MILLIS = 4_000L
  */
 @Composable
 fun AppRoot(vm: AppViewModel, onExit: () -> Unit) {
-    val s by vm.state.collectAsState()
+    val s by vm.state.collectAsStateWithLifecycle()
     val screen = vm.navigator.current
     BackHandler { if (!vm.navigator.back()) onExit() }
 

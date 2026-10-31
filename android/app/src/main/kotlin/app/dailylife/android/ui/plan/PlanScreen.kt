@@ -82,8 +82,8 @@ fun PlanScreen(vm: AppViewModel, s: Snapshot) {
         )
 
         when (mode) {
-            PlanView.DAY -> DayTimeline(vm, s, date, planItems(s, vm.dayPlanner, date), drag)
-            PlanView.AGENDA -> Agenda(vm, s, planItems(s, vm.dayPlanner, date))
+            PlanView.DAY -> DayTimeline(vm, s, date, rememberPlanItems(vm, s, date), drag)
+            PlanView.AGENDA -> Agenda(vm, s, rememberPlanItems(vm, s, date))
             PlanView.WEEK ->
                 weekOf(date).forEach { day ->
                     WeekDay(vm, s, day, isToday = day == today) {
@@ -190,7 +190,7 @@ private fun WeekDay(
             style = AppType.label.copy(color = if (isToday) AppColors.primary else AppColors.text),
             modifier = Modifier.clickable(onClick = onOpenDay),
         )
-        val items = planItems(s, vm.dayPlanner, day).filter { it.kind != PlanItemKind.PRAYER }
+        val items = rememberPlanItems(vm, s, day).filter { it.kind != PlanItemKind.PRAYER }
         if (items.isEmpty()) Text(tr("emptyDay"), style = AppType.micro) else Agenda(vm, s, items)
     }
 }
@@ -285,6 +285,16 @@ private fun UnplannedTasks(
         }
     }
 }
+
+/**
+ * [planItems] for [date], recomputed only when its inputs change: prayer times and the day's scans
+ * are too costly to redo on every recomposition.
+ */
+@Composable
+private fun rememberPlanItems(vm: AppViewModel, s: Snapshot, date: LocalDate): List<PlanItem> =
+    remember(s.tasks, s.sessions, s.rules, s.events, s.blocks, s.prayer, s.prefs, date) {
+        planItems(s, vm.dayPlanner, date)
+    }
 
 /** What a plan item is called: its title, or the localized prayer name. */
 @Composable

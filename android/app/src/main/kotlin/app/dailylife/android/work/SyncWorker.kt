@@ -46,12 +46,16 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 )
         }
 
-        /** Syncs shortly after a local change; queued behind a run already in progress. */
+        /**
+         * Syncs shortly after the last local change: each request restarts the short delay, so a
+         * burst of edits becomes one sync. A run already in progress is replaced; pushes are
+         * idempotent and pulls resume, so that only repeats safe work.
+         */
         fun requestSoon(context: Context) {
             WorkManager.getInstance(context)
                 .enqueueUniqueWork(
                     SOON,
-                    ExistingWorkPolicy.APPEND_OR_REPLACE,
+                    ExistingWorkPolicy.REPLACE,
                     OneTimeWorkRequestBuilder<SyncWorker>()
                         .setConstraints(online)
                         .setInitialDelay(2, TimeUnit.SECONDS)

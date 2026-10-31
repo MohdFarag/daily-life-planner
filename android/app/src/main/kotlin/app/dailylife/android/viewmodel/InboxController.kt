@@ -1,5 +1,8 @@
 package app.dailylife.android.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import app.dailylife.android.data.WORK_LIST
 import app.dailylife.android.navigation.Screen
 import app.dailylife.core.inbox.Triage
@@ -14,7 +17,7 @@ import kotlinx.coroutines.launch
 
 /** Triage decisions (TRI01–TRI07), undo, and managing items in collections and trash. */
 class InboxController(private val ctx: ControllerScope) {
-    private var lastUndo: Undo? = null
+    private var lastUndo by mutableStateOf<Undo?>(null)
     val canUndo: Boolean
         get() = lastUndo != null
 

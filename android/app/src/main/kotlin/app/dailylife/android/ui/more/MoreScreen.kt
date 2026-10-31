@@ -23,7 +23,6 @@ import androidx.compose.material.icons.outlined.ViewTimeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +30,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.dailylife.android.data.Snapshot
 import app.dailylife.android.navigation.Screen
 import app.dailylife.android.ui.components.Corner12
@@ -89,7 +89,7 @@ fun MoreScreen(vm: AppViewModel, s: Snapshot) {
             vm.navigator.open(Screen.Collections)
         }
         SectionLabel(tr("settings"))
-        val account = vm.account.account.collectAsState().value
+        val account = vm.account.account.collectAsStateWithLifecycle().value
         NavRow(Icons.Outlined.Sync, tr("accountSync"), account?.email ?: tr("localOnly")) {
             vm.navigator.open(Screen.Account)
         }

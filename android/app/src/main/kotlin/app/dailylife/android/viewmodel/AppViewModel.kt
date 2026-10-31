@@ -1,6 +1,7 @@
 package app.dailylife.android.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -18,9 +19,12 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 
 /** Which task the scheduling sheet plans, and the session being edited if any. */
 data class ScheduleTarget(
@@ -49,7 +53,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var scheduling by mutableStateOf<ScheduleTarget?>(null)
     var editingEvent by mutableStateOf<EventTarget?>(null)
 
-    private val ctx = ControllerScope(viewModelScope, container, navigator, messages, clock)
+    /**
+     * Controller work is fire-and-forget; a failure there (storage full, unreadable data) is logged
+     * and reported instead of crashing the app.
+     */
+    private val failures = CoroutineExceptionHandler { _, e ->
+        Log.e(TAG, "Action failed", e)
+        messages.show("actionFailed")
+    }
+    private val ctx =
+        ControllerScope(viewModelScope + failures, container, navigator, messages, clock)
     val capture = CaptureController(ctx)
     val inbox = InboxController(ctx)
     val focus = FocusController(ctx)
@@ -60,14 +73,23 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val events = EventController(ctx)
 
     init {
-        viewModelScope.launch {
+        ctx.scope.launch {
             container.repository.load()
             container.ruleScheduler.refreshAll(today())
             container.repository.purgeItems(Triage.purgeDue(state.value.items, now()).map { it.id })
         }
-        // Re-arm local reminders whenever tasks or sessions change.
+        // Re-arm local reminders when what they depend on changes. Tables a write did not touch
+        // keep
+        // the same list instance, so the identity checks skip all other writes cheaply.
         viewModelScope.launch {
-            state.drop(1).collect { if (it.loaded) Reminders.sync(getApplication(), it) }
+            state
+                .filter { it.loaded }
+                .distinctUntilChanged { a, b ->
+                    a.tasks === b.tasks &&
+                        a.sessions === b.sessions &&
+                        a.prefs.reminderMinutes == b.prefs.reminderMinutes
+                }
+                .collect { Reminders.sync(getApplication(), it) }
         }
     }
 
@@ -78,4 +100,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun now(): Instant = ctx.now()
 
     fun today(): LocalDate = ctx.today()
+
+    private companion object {
+        const val TAG = "AppViewModel"
+    }
 }

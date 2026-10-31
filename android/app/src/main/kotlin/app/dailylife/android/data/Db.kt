@@ -15,6 +15,7 @@ import org.json.JSONObject
  * server even if the app is closed before syncing (SYN01).
  */
 class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 2) {
+    private val changed = mutableSetOf<Table>()
 
     /** Tables, named like the server's entities; all of them sync. */
     enum class Table(val sql: String) {
@@ -106,11 +107,13 @@ class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 2) {
                 extra.forEach { (k, value) -> put(k, value) }
             }
         writableDatabase.insertWithOnConflict(table.name, null, v, SQLiteDatabase.CONFLICT_REPLACE)
+        changed += table
         if (record) queue(table, id, OP_UPSERT)
     }
 
     fun delete(table: Table, id: String, record: Boolean = true) {
         val removed = writableDatabase.delete(table.name, "id = ?", arrayOf(id))
+        if (removed > 0) changed += table
         if (record && removed > 0) queue(table, id, OP_DELETE)
     }
 
@@ -134,6 +137,9 @@ class Db(context: Context) : SQLiteOpenHelper(context, "planner.db", null, 2) {
             arrayOf(table.name, id, op, UUID.randomUUID().toString()),
         )
     }
+
+    /** Tables written since the last call, so a reader can refresh only those. */
+    fun takeChanged(): Set<Table> = changed.toSet().also { changed.clear() }
 
     /** Runs [block] in one transaction so related rows change together. */
     fun <T> tx(block: () -> T): T {
