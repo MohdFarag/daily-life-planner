@@ -47,7 +47,8 @@ android {
                 "proguard-rules.pro",
             )
             // Without a release keystore, sign with the debug key so the APK still installs.
-            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            signingConfig =
+                signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
     compileOptions {
