@@ -86,7 +86,7 @@ jobs:
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
           else
-            echo "::warning::ANDROID_KEYSTORE_BASE64 is not set; building unsigned artifacts."
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is not set; signing with a throwaway debug key (updates will need a reinstall)."
           fi
 
       - name: Build release
@@ -99,7 +99,9 @@ jobs:
           SERVER_URL: ${{ vars.API_SERVER_URL }} # pre-filled on the sign-in screen
         run: |
           set -o pipefail
-          ./gradlew -p core test :app:assembleRelease :app:bundleRelease -PserverUrl="$SERVER_URL" --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+          # core is its own Gradle build (an included build of the app), so test it separately.
+          { ./gradlew -p core test --stacktrace &&
+            ./gradlew :app:assembleRelease :app:bundleRelease -PserverUrl="$SERVER_URL" --stacktrace; } 2>&1 | tee "$RUNNER_TEMP/gradle.log"
       - name: Explain failure
         if: failure()
         run: ../.github/scripts/gradle-failure-annotations.sh "$RUNNER_TEMP/gradle.log"
