@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/MohdFarag/daily-life-planner/compare/v0.2.2...v0.2.3) (2026-10-31)
+
+
+### Bug Fixes
+
+* **android:** high and medium findings from the code-quality review ([#29](https://github.com/MohdFarag/daily-life-planner/issues/29)) ([3b2a2d7](https://github.com/MohdFarag/daily-life-planner/commit/3b2a2d749ed7a40426ef8c0a98c5bd7cae091799))
+
 ## [0.2.2](https://github.com/MohdFarag/daily-life-planner/compare/v0.2.1...v0.2.2) (2026-10-31)
 
 
