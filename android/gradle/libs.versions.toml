@@ -9,7 +9,7 @@ work = "2.10.0"
 coroutines = "1.9.0"
 # 0.0.6+ is compiled for Java 21; 0.0.5 targets Java 17 like the rest of the app.
 adhan = "0.0.5"
-json = "20240303"
+json = "20260814"
 ktfmt-plugin = "0.27.0"
 
 [libraries]
