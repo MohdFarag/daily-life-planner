@@ -25,6 +25,16 @@ done
   fi
 done
 
+# R8 (release shrinking) errors, and the keep rules it suggests for missing classes.
+{ grep -E '^ERROR: ' "$log" || true; } | sort -u | head -n 3 | while IFS= read -r line; do
+  echo "::error title=R8::${line//%/%25}"
+done
+for rules in app/build/outputs/mapping/*/missing_rules.txt; do
+  [[ -f "$rules" ]] || continue
+  body=$(head -c 3500 "$rules" | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+  echo "::error title=R8 missing rules (${rules})::${body}"
+done
+
 awk '
   /^\* What went wrong:/ { grab = 1; msg = ""; next }
   grab && /^\* (Try|Exception is):/ { grab = 0; print msg; next }
